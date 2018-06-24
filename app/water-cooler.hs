@@ -1,6 +1,12 @@
 module Main where
 
-import WaterCooler
+import           CLOpts
+import           WaterCooler
 
 main :: IO ()
-main = someFunc
+main = run =<< execParser (parseCommandLine `withInfo` infoStr)
+  where
+    infoStr = "The water cooler " -- ++ version
+
+run :: Options -> IO ()
+run = undefined

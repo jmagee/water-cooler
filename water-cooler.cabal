@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1026d1bcd78437b4f3b29e1136ee28e6a47a4c208e42eca2d2cdba76a3b35ca
+-- hash: e96714a91bb6bdb840a39af81eb1cec221c5deaa767d70b113b462749a2e761a
 
 name:           water-cooler
 version:        0.1.0.0
@@ -38,12 +38,14 @@ library
 executable water-cooler
   main-is: water-cooler.hs
   other-modules:
+      CLOpts
       Paths_water_cooler
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , optparse-applicative
     , water-cooler
   default-language: Haskell2010
 
