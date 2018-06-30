@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: df4eec94f57bdf2f079d73f43ae7f9255943595555f72a83b9db70603d941ea8
+-- hash: 33124f3526bbc6998f354be8839af4c20d919a3dd36ccf2f22911a6d05cdbf0b
 
 name:           water-cooler
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       WaterCooler
+      WaterCooler.Env
       WaterCooler.Internal
   other-modules:
       Paths_water_cooler
@@ -38,7 +39,9 @@ library
     , base >=4.7 && <5
     , bytestring
     , directory
+    , exceptions
     , optional-args
+    , path
     , time
   default-language: Haskell2010
 

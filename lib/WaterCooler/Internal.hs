@@ -22,6 +22,7 @@ import           Data.Time                (LocalTime, defaultTimeLocale,
                                            getCurrentTimeZone, parseTimeOrError,
                                            utcToLocalTime)
 import           Data.Time.Clock          (getCurrentTime)
+import           Path                     (Abs, File, Path, toFilePath)
 import           System.Directory         (doesFileExist)
 
 -- | Drink size.
@@ -72,20 +73,22 @@ drink size = Drink size <$> now
     now = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
 
 -- | Write the water cooler file.
-writeWaterCooler :: FilePath -> WaterCooler -> IO ()
-writeWaterCooler file wc = BS.writeFile file $ encodePretty wc
+writeWaterCooler :: Path Abs File -> WaterCooler -> IO ()
+writeWaterCooler file wc = BS.writeFile (toFilePath file) $ encodePretty wc
 
 -- | Read the water cooler file.
-readWaterCooler :: FilePath -> IO (Maybe WaterCooler)
+readWaterCooler :: Path Abs File -> IO (Maybe WaterCooler)
 readWaterCooler file = unlessEmpty file Nothing $ \contents ->
   either bail Just (eitherDecode contents :: Either String WaterCooler)
   where
-    bail err =  error $ "Error parsing JSON file <" ++ file ++ ">:" ++ err
+    bail err =  error $ "Error parsing JSON file <" ++ (toFilePath file)
+                                                    ++ ">:" ++ err
 
 -- | Read the file, unless it is empty, in which case return a default value
-unlessEmpty :: FilePath -> a -> (BS.ByteString -> a) -> IO a
+unlessEmpty :: Path b File -> a -> (BS.ByteString -> a) -> IO a
 unlessEmpty file def action =
-  doesFileExist file >>= bool (pure def) (go <$> BS.readFile file)
+  let f = toFilePath file
+  in doesFileExist f >>= bool (pure def) (go <$> BS.readFile f)
   where
     go contents
       | BS.null contents = def

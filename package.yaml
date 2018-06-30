@@ -29,7 +29,9 @@ library:
     - aeson-pretty
     - bytestring
     - directory
+    - exceptions
     - optional-args
+    - path
     - time
 
 executables:
