@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7463d773b84b6f4a6b047cb86914c55a7614b4c819bf72472340c8d7ab9c6d48
+-- hash: df4eec94f57bdf2f079d73f43ae7f9255943595555f72a83b9db70603d941ea8
 
 name:           water-cooler
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       WaterCooler
+      WaterCooler.Internal
   other-modules:
       Paths_water_cooler
   hs-source-dirs:
