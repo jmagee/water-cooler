@@ -24,6 +24,13 @@ dependencies:
 
 library: 
   source-dirs: lib
+  dependencies:
+    - aeson
+    - aeson-pretty
+    - bytestring
+    - directory
+    - optional-args
+    - time
 
 executables:
   water-cooler:
