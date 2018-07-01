@@ -10,7 +10,7 @@ import           Path                (Abs, File, Path, parseAbsFile)
 
 data Env = Env { _cooler  :: Path Abs File
                , _history :: Path Abs File
-               } deriving (Show)
+               } deriving (Eq, Show)
 
 -- | Create an Env.
 mkEnv :: MonadThrow m => FilePath -> FilePath -> m Env

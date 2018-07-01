@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 33124f3526bbc6998f354be8839af4c20d919a3dd36ccf2f22911a6d05cdbf0b
+-- hash: 149393e7f76cbb543c237e8faa65ae130edbafd1e4cff604cdb862f095aa3ef1
 
 name:           water-cooler
 version:        0.1.0.0
@@ -63,11 +63,16 @@ test-suite water-cooler-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      WaterCoolerSpec
       Paths_water_cooler
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , base >=4.7 && <5
+    , hspec
+    , path
+    , time
     , water-cooler
   default-language: Haskell2010

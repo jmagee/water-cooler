@@ -56,3 +56,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - water-cooler
+    - hspec
+    - path
+    - QuickCheck
+    - time

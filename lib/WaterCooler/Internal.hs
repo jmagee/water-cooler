@@ -9,6 +9,7 @@ module WaterCooler.Internal
 , archiveHistory
 , drink
 , now
+, magicTimeThreshold
 , nextDrink
 , readHistory
 , readWaterCooler
@@ -23,24 +24,34 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString (..), null,
                                                  readFile, writeFile)
-import           Data.Time                (LocalTime, UTCTime, NominalDiffTime,
-                                           defaultTimeLocale,
-                                           getCurrentTimeZone, parseTimeOrError,
-                                           utcToLocalTime, addUTCTime)
+import           Data.Time                (LocalTime, NominalDiffTime, UTCTime,
+                                           addUTCTime, defaultTimeLocale,
+                                           diffUTCTime, getCurrentTimeZone,
+                                           parseTimeOrError, utcToLocalTime)
 import           Data.Time.Clock          (getCurrentTime)
 import           Path                     (Abs, File, Path, toFilePath)
 import           System.Directory         (doesFileExist)
 
+-- | Magic time threshold.
+-- This threshold is used when comparing times.  Two times with a difference
+-- within this range are considered to be effectively "the same".  This is
+-- primarily used for tests.
+magicTimeThreshold :: NominalDiffTime
+magicTimeThreshold = 60
+
 -- | Drink size.
 -- Sip, Swallow, or Gulp- roughly small, medium, or large.
 data DrinkSize = Sip | Swallow | Gulp
-               deriving (Read, Show)
+               deriving (Eq, Read, Show)
 
 -- | A drink - when and how much.
 data Drink =
   Drink { _howMuch :: DrinkSize
         , _when    :: UTCTime
         } deriving (Show)
+
+instance Eq Drink where
+  (Drink a b) == (Drink c d) = (a == c) && (diffUTCTime b d <= magicTimeThreshold)
 
 instance FromJSON Drink where
   -- parseJSON (Object v) = Drink <$> v .: "when" <*> (read <$> (v .: "howMuch"))
