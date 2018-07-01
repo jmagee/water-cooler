@@ -6,6 +6,8 @@ module WaterCooler.Internal
 , Drink (..)
 , WaterCooler (..)
 , drink
+, now
+, nextDrink
 , readWaterCooler
 , writeWaterCooler
 ) where
@@ -18,9 +20,10 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString (..), null,
                                                  readFile, writeFile)
-import           Data.Time                (LocalTime, defaultTimeLocale,
+import           Data.Time                (LocalTime, UTCTime, NominalDiffTime,
+                                           defaultTimeLocale,
                                            getCurrentTimeZone, parseTimeOrError,
-                                           utcToLocalTime)
+                                           utcToLocalTime, addUTCTime)
 import           Data.Time.Clock          (getCurrentTime)
 import           Path                     (Abs, File, Path, toFilePath)
 import           System.Directory         (doesFileExist)
@@ -33,12 +36,12 @@ data DrinkSize = Sip | Swallow | Gulp
 -- | A drink - when and how much.
 data Drink =
   Drink { _howMuch :: DrinkSize
-        , _when    :: LocalTime
+        , _when    :: UTCTime
         } deriving (Show)
 
 instance FromJSON Drink where
   -- parseJSON (Object v) = Drink <$> v .: "when" <*> (read <$> (v .: "howMuch"))
-  parseJSON (Object v) = Drink <$> (read <$> (v .: "howMuch")) <*> v .: "when"
+  parseJSON (Object v) = Drink <$> (read <$> (v .: "howMuch")) <*> (read <$> (v .: "when"))
   parseJSON _ = mzero
 
 instance ToJSON Drink where
@@ -50,7 +53,7 @@ instance ToJSON Drink where
 -- | The keeper of fluids.
 data WaterCooler =
   WaterCooler { _lastDrink      :: Drink
-              , _secondsToNext  :: Int
+              , _secondsToNext  :: NominalDiffTime
               -- , _drinks         :: [Drink]
               -- Probably want to maintain drink list separately.
               } deriving (Show)
@@ -69,8 +72,10 @@ instance ToJSON WaterCooler where
 -- | Drink some water now.
 drink :: DrinkSize -> IO Drink
 drink size = Drink size <$> now
-  where
-    now = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
+
+-- | Get the current time.
+now :: IO UTCTime
+now = {-utcToLocalTime <$> getCurrentTimeZone <*> -}getCurrentTime
 
 -- | Write the water cooler file.
 writeWaterCooler :: Path Abs File -> WaterCooler -> IO ()
@@ -81,8 +86,12 @@ readWaterCooler :: Path Abs File -> IO (Maybe WaterCooler)
 readWaterCooler file = unlessEmpty file Nothing $ \contents ->
   either bail Just (eitherDecode contents :: Either String WaterCooler)
   where
-    bail err =  error $ "Error parsing JSON file <" ++ (toFilePath file)
+    bail err =  error $ "Error parsing JSON file <" ++ toFilePath file
                                                     ++ ">:" ++ err
+
+-- | The time of the next drink
+nextDrink :: WaterCooler -> UTCTime
+nextDrink (WaterCooler (Drink _ last) next) = addUTCTime next last
 
 -- | Read the file, unless it is empty, in which case return a default value
 unlessEmpty :: Path b File -> a -> (BS.ByteString -> a) -> IO a
