@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 149393e7f76cbb543c237e8faa65ae130edbafd1e4cff604cdb862f095aa3ef1
+-- hash: b9b64b1ab8a30e39cf704f293c4875542fa56270266f5b164a9d0600436218b1
 
 name:           water-cooler
 version:        0.1.0.0
@@ -71,6 +71,7 @@ test-suite water-cooler-test
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , directory
     , hspec
     , path
     , time
