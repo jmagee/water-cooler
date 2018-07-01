@@ -1,13 +1,16 @@
 -- | Internal buildings blocks for water cooler.
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module WaterCooler.Internal
 ( DrinkSize (..)
 , Drink (..)
 , WaterCooler (..)
+, archiveHistory
 , drink
 , now
 , nextDrink
+, readHistory
 , readWaterCooler
 , writeWaterCooler
 ) where
@@ -77,17 +80,35 @@ drink size = Drink size <$> now
 now :: IO UTCTime
 now = {-utcToLocalTime <$> getCurrentTimeZone <*> -}getCurrentTime
 
+-- | Write a json file.
+writeJSON :: ToJSON a => Path Abs File -> a -> IO ()
+writeJSON file thing = BS.writeFile (toFilePath file) $ encodePretty thing
+
 -- | Write the water cooler file.
 writeWaterCooler :: Path Abs File -> WaterCooler -> IO ()
-writeWaterCooler file wc = BS.writeFile (toFilePath file) $ encodePretty wc
+writeWaterCooler = writeJSON
+
+-- | Bail out error when parsing a json file
+jbail :: Path Abs File -> String -> a
+jbail f e = error $ "Error parsing JSON file <" ++ toFilePath f ++ ">:" ++ e
 
 -- | Read the water cooler file.
 readWaterCooler :: Path Abs File -> IO (Maybe WaterCooler)
 readWaterCooler file = unlessEmpty file Nothing $ \contents ->
-  either bail Just (eitherDecode contents :: Either String WaterCooler)
-  where
-    bail err =  error $ "Error parsing JSON file <" ++ toFilePath file
-                                                    ++ ">:" ++ err
+  either (jbail file) Just (eitherDecode contents :: Either String WaterCooler)
+
+-- | Read history.
+readHistory :: Path Abs File -> IO [Drink]
+readHistory file = unlessEmpty file [] $ \contents ->
+  either (jbail file) id (eitherDecode contents :: Either String [Drink])
+
+-- | Archive the water cooler history.
+archiveHistory :: Path Abs File -> Path Abs File -> IO ()
+archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
+  Nothing                        -> pure ()
+  Just (WaterCooler lastDrink _) -> do
+    history <- readHistory histFile
+    seq history $ writeJSON histFile $ lastDrink : history
 
 -- | The time of the next drink
 nextDrink :: WaterCooler -> UTCTime

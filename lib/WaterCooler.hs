@@ -1,5 +1,5 @@
 -- | The water cooler.
-{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE LambdaCase #-}
 
 module WaterCooler
 ( drinkWater
@@ -24,8 +24,9 @@ import           Path                 (Abs, File, Path, parseAbsFile)
 
 -- | Drink water.
 drinkWater :: Env -> DrinkSize -> Optional NominalDiffTime -> IO ()
-drinkWater (Env cooler history) size next = drink size >>= \beverage ->
+drinkWater (Env cooler history) size next = drink size >>= \beverage -> do
   writeWaterCooler cooler $ WaterCooler beverage $ defaultTo 1200 next
+  archiveHistory cooler history -- fixme: archiveHistory should use cooler directly, rather than reading it
 {-drinkWater size next = do-}
   {-json     <- parseAbsFile "/home/jmagee/.water-cooler.json"-}
   {-beverage <- drink size-}
