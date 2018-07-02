@@ -5,6 +5,7 @@ module WaterCooler
 ( drinkWater
 , checkDrink
 , timeTilNextDrink
+, updateTimeTilNextDrink
 
   -- Re-exports.
 , DrinkSize (..)
@@ -43,3 +44,11 @@ timeTilNextDrink :: Env -> IO NominalDiffTime
 timeTilNextDrink (Env cooler _) = readWaterCooler cooler >>= \case
   Just chill -> diffUTCTime (nextDrink chill) <$> now
   Nothing    -> let n = now in diffUTCTime <$> n <*> n
+
+-- | Update the time until the next drink.
+updateTimeTilNextDrink :: Env -> NominalDiffTime -> IO ()
+updateTimeTilNextDrink (Env coolerFile _) t =
+  readWaterCooler coolerFile >>= \case
+    Just cooler -> writeWaterCooler coolerFile cooler { _secondsToNext = t }
+    -- No cooler yet, so do nothing.
+    Nothing     -> pure ()
