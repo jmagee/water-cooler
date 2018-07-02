@@ -48,7 +48,7 @@ data DrinkSize = Sip | Swallow | Gulp
                deriving (Eq, Read, Show)
 
 instance FromString DrinkSize where
-  fromString s = case (toLower <$> s) of
+  fromString s = case toLower <$> s of
     "sip"     -> Just Sip
     "swallow" -> Just Swallow
     "gulp"    -> Just Gulp
