@@ -12,4 +12,4 @@ run :: Options -> IO ()
 run (Options common command) = do
   env <- mkEnv "/tmp/cooler.json" "/tmp/history.json"
   case command of
-    DrinkWater (Specific size) -> drinkWater env size Default
+    DrinkWater size -> drinkWater env size Default

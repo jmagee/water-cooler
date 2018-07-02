@@ -24,14 +24,13 @@ import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
-drinkWater :: Env -> DrinkSize -> Optional NominalDiffTime -> IO ()
-drinkWater (Env cooler history) size next = drink size >>= \beverage -> do
-  writeWaterCooler cooler $ WaterCooler beverage $ defaultTo 1200 next
-  archiveHistory cooler history -- fixme: archiveHistory should use cooler directly, rather than reading it
-{-drinkWater size next = do-}
-  {-json     <- parseAbsFile "/home/jmagee/.water-cooler.json"-}
-  {-beverage <- drink size-}
-  {-writeWaterCooler json $ WaterCooler beverage $ defaultTo 1200 next-}
+drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO ()
+drinkWater (Env coolerFile historyFile) size next = do
+  let realSize = defaultTo Swallow size
+  beverage <- drink realSize
+  let cooler = WaterCooler beverage $ defaultTo 1200 next
+  writeWaterCooler coolerFile cooler
+  archiveHistory coolerFile historyFile-- fixme: archiveHistory should use cooler directly, rather than reading it
 
 -- | Check if it is time for a drink.
 checkDrink :: Env -> IO Bool

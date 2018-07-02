@@ -73,14 +73,14 @@ spec = do
       shouldDrinka `shouldBe` True
 
       -- Drank, but request the next drink immediately.
-      drinkWater env Sip $ Specific 0
+      drinkWater env (Specific Sip) (Specific 0)
       shouldDrinkb <- checkDrink env
       shouldDrinkb `shouldBe` True
       timeTilNextb <- timeTilNextDrink env
       timeTilNextb `shouldSatisfy` \x -> x >= -1 && x <= 1
 
       -- Drank, using the default next drink timing.
-      drinkWater env Gulp Default
+      drinkWater env Default Default
       shouldDrinkc <- checkDrink env
       shouldDrinkc `shouldBe` False
       timeTilNextc <- timeTilNextDrink env
