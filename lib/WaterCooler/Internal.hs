@@ -16,6 +16,8 @@ module WaterCooler.Internal
 , writeWaterCooler
 ) where
 
+import           WaterCooler.FromString
+
 import           Control.Monad            (mzero)
 import           Data.Aeson               (FromJSON, ToJSON, Value (..),
                                            eitherDecode, object, parseJSON,
@@ -24,6 +26,7 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString (..), null,
                                                  readFile, writeFile)
+import           Data.Char                (toLower)
 import           Data.Time                (LocalTime, NominalDiffTime, UTCTime,
                                            addUTCTime, defaultTimeLocale,
                                            diffUTCTime, getCurrentTimeZone,
@@ -43,6 +46,13 @@ magicTimeThreshold = 60
 -- Sip, Swallow, or Gulp- roughly small, medium, or large.
 data DrinkSize = Sip | Swallow | Gulp
                deriving (Eq, Read, Show)
+
+instance FromString DrinkSize where
+  fromString s = case (toLower <$> s) of
+    "sip"     -> Just Sip
+    "swallow" -> Just Swallow
+    "gulp"    -> Just Gulp
+    _         -> Nothing
 
 -- | A drink - when and how much.
 data Drink =

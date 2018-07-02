@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b9b64b1ab8a30e39cf704f293c4875542fa56270266f5b164a9d0600436218b1
+-- hash: fe0712ba491cbd8b75b45731f5726f099aef533da4f29cf9cc61f71153513d73
 
 name:           water-cooler
 version:        0.1.0.0
@@ -28,11 +28,13 @@ library
   exposed-modules:
       WaterCooler
       WaterCooler.Env
+      WaterCooler.FromString
       WaterCooler.Internal
   other-modules:
       Paths_water_cooler
   hs-source-dirs:
       lib
+  ghc-options: -Wall
   build-depends:
       aeson
     , aeson-pretty
@@ -52,9 +54,10 @@ executable water-cooler
       Paths_water_cooler
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       base >=4.7 && <5
+    , optional-args
     , optparse-applicative
     , water-cooler
   default-language: Haskell2010
@@ -67,7 +70,7 @@ test-suite water-cooler-test
       Paths_water_cooler
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       QuickCheck
     , base >=4.7 && <5

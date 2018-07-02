@@ -9,4 +9,7 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
     infoStr = "The water cooler " -- ++ version
 
 run :: Options -> IO ()
-run = undefined
+run (Options common command) = do
+  env <- mkEnv "/tmp/cooler.json" "/tmp/history.json"
+  case command of
+    DrinkWater (Specific size) -> drinkWater env size Default

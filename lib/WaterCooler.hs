@@ -9,12 +9,16 @@ module WaterCooler
   -- Re-exports.
 , DrinkSize (..)
 , Drink
+, FromString    -- From WaterCooler.FromString
+, fromString    -- From WaterCooler.FromString
+, mkEnv         -- From WaterCooler.Env
 , WaterCooler
 , Optional (..) -- From Data.Optional
 , LocalTime     -- From Data.Time
 ) where
 
 import           WaterCooler.Env
+import           WaterCooler.FromString
 import           WaterCooler.Internal
 
 import           Data.Optional        (Optional (..), defaultTo)
