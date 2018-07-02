@@ -13,6 +13,7 @@ module CLOpts
 import           WaterCooler
 
 import           Data.Optional             (Optional (..))
+import           Data.Semigroup            ((<>))
 import           Options.Applicative       hiding (optional)
 import           Options.Applicative.Types (readerAsk)
 
@@ -22,6 +23,8 @@ data Common = Common Int
 
 -- | Commands.
 data Command = DrinkWater (Optional DrinkSize)
+             | Status
+             | NextDrink
              deriving (Show)
 
 data Options = Options Common Command deriving (Show)
@@ -35,7 +38,9 @@ parseCommon = pure $ Common 1
 
 parseCommand :: Parser Command
 parseCommand = subparser
-  $ command "drink"        (parseDrink `withInfo` "Drink water")
+  $  command "drink"        (parseDrink `withInfo`  "Drink water")
+  <> command "status"       (pure Status `withInfo` "Check Status")
+  <> command "next"         (pure NextDrink `withInfo`   "Check next drink")
 
 parseDrink :: Parser Command
 parseDrink = DrinkWater <$> optional (argument parseDrinkSize (metavar "Drink-Size"))
