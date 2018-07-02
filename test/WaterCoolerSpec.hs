@@ -8,25 +8,15 @@ import           WaterCooler.Env
 import           WaterCooler.Internal
 
 import           Control.Monad             (liftM2)
-import           Data.Bool                 (bool)
-import           Data.Time                 (NominalDiffTime, addUTCTime,
-                                            diffUTCTime)
-import           Path                      (Abs, Dir, File, Path, mkAbsFile,
+import           Data.Time                 (addUTCTime, diffUTCTime)
+import           Path                      (Abs, Dir, Path, mkAbsFile,
                                             parseAbsDir, parseRelFile,
                                             toFilePath, (</>))
 import           System.Directory          (doesFileExist, getCurrentDirectory,
                                             removeFile)
 import           Test.Hspec
 import           Test.Hspec.QuickCheck     (prop)
-import           Test.QuickCheck           (Property, oneof)
-import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
 import           Test.QuickCheck.Monadic   (assert, monadicIO, run)
-
-instance Arbitrary DrinkSize where
-  arbitrary = oneof [pure Gulp, pure Swallow, pure Sip]
-  shrink Gulp = [Swallow, Sip]
-  shrink Swallow = [Sip]
-  shrink Sip = []
 
 getCWD :: IO (Path Abs Dir)
 getCWD = getCurrentDirectory >>= parseAbsDir
@@ -38,13 +28,8 @@ getFileName s = do
   if e
     then error $ "Test file exists, please manually remove: " ++ toFilePath f
     else pure $ toFilePath f
-
- {-getFileName' s >>= \f -> doesFileExist f >>= checkExists-}
-  {---bool (pure (toFilePath f)) (error "blah")-}
   where
-    getFileName' s = liftM2 (</>) getCWD $ parseRelFile s
-  {-  checkExists fp | False = pure f-}
-                   {-| True  = error "blah"-}
+    getFileName' = liftM2 (</>) getCWD . parseRelFile
 
 spec :: Spec
 spec = do
@@ -82,24 +67,24 @@ spec = do
       env     <- mkEnv cooler history
 
       -- Never drank before, expect to drink.
-      timeTilNext <- timeTilNextDrink env
-      timeTilNext `shouldSatisfy` \x -> x >= -1 && x <= 1
-      shouldDrink <- checkDrink env
-      shouldDrink `shouldBe` True
+      timeTilNexta <- timeTilNextDrink env
+      timeTilNexta `shouldSatisfy` \x -> x >= -1 && x <= 1
+      shouldDrinka <- checkDrink env
+      shouldDrinka `shouldBe` True
 
       -- Drank, but request the next drink immediately.
       drinkWater env Sip $ Specific 0
-      shouldDrink <- checkDrink env
-      shouldDrink `shouldBe` True
-      timeTilNext <- timeTilNextDrink env
-      timeTilNext `shouldSatisfy` \x -> x >= -1 && x <= 1
+      shouldDrinkb <- checkDrink env
+      shouldDrinkb `shouldBe` True
+      timeTilNextb <- timeTilNextDrink env
+      timeTilNextb `shouldSatisfy` \x -> x >= -1 && x <= 1
 
       -- Drank, using the default next drink timing.
       drinkWater env Gulp Default
-      shouldDrink <- checkDrink env
-      shouldDrink `shouldBe` False
-      timeTilNext <- timeTilNextDrink env
-      timeTilNext `shouldSatisfy` \x -> x >= 1190 && x <= 1210
+      shouldDrinkc <- checkDrink env
+      shouldDrinkc `shouldBe` False
+      timeTilNextc <- timeTilNextDrink env
+      timeTilNextc `shouldSatisfy` \x -> x >= 1190 && x <= 1210
 
       -- FIXME: Do more testing here
       removeFile cooler

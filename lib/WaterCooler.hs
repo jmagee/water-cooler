@@ -14,17 +14,14 @@ module WaterCooler
 , mkEnv         -- From WaterCooler.Env
 , WaterCooler
 , Optional (..) -- From Data.Optional
-, LocalTime     -- From Data.Time
 ) where
 
 import           WaterCooler.Env
 import           WaterCooler.FromString
 import           WaterCooler.Internal
 
-import           Data.Optional        (Optional (..), defaultTo)
-import           Data.Time            (LocalTime, NominalDiffTime, diffUTCTime,
-                                       localTimeToUTC)
-import           Path                 (Abs, File, Path, parseAbsFile)
+import           Data.Optional          (Optional (..), defaultTo)
+import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> DrinkSize -> Optional NominalDiffTime -> IO ()

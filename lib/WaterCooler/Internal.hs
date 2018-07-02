@@ -18,22 +18,22 @@ module WaterCooler.Internal
 
 import           WaterCooler.FromString
 
-import           Control.Monad            (mzero)
-import           Data.Aeson               (FromJSON, ToJSON, Value (..),
-                                           eitherDecode, object, parseJSON,
-                                           toJSON, (.:), (.=))
-import           Data.Aeson.Encode.Pretty (encodePretty)
-import           Data.Bool                (bool)
-import qualified Data.ByteString.Lazy     as BS (ByteString (..), null,
-                                                 readFile, writeFile)
-import           Data.Char                (toLower)
-import           Data.Time                (LocalTime, NominalDiffTime, UTCTime,
-                                           addUTCTime, defaultTimeLocale,
-                                           diffUTCTime, getCurrentTimeZone,
-                                           parseTimeOrError, utcToLocalTime)
-import           Data.Time.Clock          (getCurrentTime)
-import           Path                     (Abs, File, Path, toFilePath)
-import           System.Directory         (doesFileExist)
+import           Control.Monad             (mzero)
+import           Data.Aeson                (FromJSON, ToJSON, Value (..),
+                                            eitherDecode, object, parseJSON,
+                                            toJSON, (.:), (.=))
+import           Data.Aeson.Encode.Pretty  (encodePretty)
+import           Data.Bool                 (bool)
+import qualified Data.ByteString.Lazy      as BS (ByteString, null, readFile,
+                                                  writeFile)
+import           Data.Char                 (toLower)
+import           Data.Time                 (NominalDiffTime, UTCTime,
+                                            addUTCTime, diffUTCTime)
+import           Data.Time.Clock           (getCurrentTime)
+import           Path                      (Abs, File, Path, toFilePath)
+import           System.Directory          (doesFileExist)
+import           Test.QuickCheck           (oneof)
+import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
 
 -- | Magic time threshold.
 -- This threshold is used when comparing times.  Two times with a difference
@@ -53,6 +53,12 @@ instance FromString DrinkSize where
     "swallow" -> Just Swallow
     "gulp"    -> Just Gulp
     _         -> Nothing
+
+instance Arbitrary DrinkSize where
+  arbitrary = oneof [pure Gulp, pure Swallow, pure Sip]
+  shrink Gulp = [Swallow, Sip]
+  shrink Swallow = [Sip]
+  shrink Sip = []
 
 -- | A drink - when and how much.
 data Drink =
@@ -86,6 +92,7 @@ instance FromJSON WaterCooler where
   parseJSON (Object v) =
     WaterCooler <$> v .: "lastDrink"
                 <*> v .: "secondsToNext"
+  parseJSON _ = mzero
 
 instance ToJSON WaterCooler where
   toJSON (WaterCooler lastDrink secondsToNext) =
@@ -133,7 +140,7 @@ archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
 
 -- | The time of the next drink
 nextDrink :: WaterCooler -> UTCTime
-nextDrink (WaterCooler (Drink _ last) next) = addUTCTime next last
+nextDrink (WaterCooler (Drink _ lastd) next) = addUTCTime next lastd
 
 -- | Read the file, unless it is empty, in which case return a default value
 unlessEmpty :: Path b File -> a -> (BS.ByteString -> a) -> IO a
@@ -144,10 +151,3 @@ unlessEmpty file def action =
     go contents
       | BS.null contents = def
       | otherwise = action contents
-
--- | Convert a string into LocalTime.
--- We define this instead of using read, because has a friendlier parse.
--- For example, read :: LocalTime, would choke on "2016-1-2", but the solution
--- below parses it as "2016-01-02".
-dateFromString :: String -> LocalTime
-dateFromString = parseTimeOrError True defaultTimeLocale "%Y-%-m-%-d %H:%M:%S"

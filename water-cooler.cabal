@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fe0712ba491cbd8b75b45731f5726f099aef533da4f29cf9cc61f71153513d73
+-- hash: 369f011065ab772472a1f0496c33bb2197a4c52f60e61edfc5b4f7d3f070bc43
 
 name:           water-cooler
 version:        0.1.0.0
@@ -36,7 +36,8 @@ library
       lib
   ghc-options: -Wall
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring

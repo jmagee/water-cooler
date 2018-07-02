@@ -34,6 +34,7 @@ library:
     - exceptions
     - optional-args
     - path
+    - QuickCheck
     - time
 
 executables:
