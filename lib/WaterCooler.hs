@@ -47,8 +47,4 @@ timeTilNextDrink (Env cooler _) = readWaterCooler cooler >>= \case
 
 -- | Update the time until the next drink.
 updateTimeTilNextDrink :: Env -> NominalDiffTime -> IO ()
-updateTimeTilNextDrink (Env coolerFile _) t =
-  readWaterCooler coolerFile >>= \case
-    Just cooler -> writeWaterCooler coolerFile cooler { _secondsToNext = t }
-    -- No cooler yet, so do nothing.
-    Nothing     -> pure ()
+updateTimeTilNextDrink env t = drinkWater env (Specific Fake) (Specific t)

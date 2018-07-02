@@ -25,6 +25,8 @@ data Common = Common Int
 data Command = DrinkWater (Optional DrinkSize)
              | Status
              | NextDrink
+             | NotThirsty
+             | NoWater
              deriving (Show)
 
 data Options = Options Common Command deriving (Show)
@@ -41,6 +43,8 @@ parseCommand = subparser
   $  command "drink"        (parseDrink `withInfo`  "Drink water")
   <> command "status"       (pure Status `withInfo` "Check Status")
   <> command "next"         (pure NextDrink `withInfo`   "Check next drink")
+  <> command "not-thirsty"  (pure NotThirsty `withInfo`  "Not thirsty")
+  <> command "no-water"     (pure NoWater `withInfo` "Out of water")
 
 parseDrink :: Parser Command
 parseDrink = DrinkWater <$> optional (argument parseDrinkSize (metavar "Drink-Size"))

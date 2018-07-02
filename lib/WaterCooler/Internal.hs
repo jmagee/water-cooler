@@ -44,7 +44,9 @@ magicTimeThreshold = 60
 
 -- | Drink size.
 -- Sip, Swallow, or Gulp- roughly small, medium, or large.
-data DrinkSize = Sip | Swallow | Gulp
+-- Fake is for a fake drink - for cases when one really doesn't want to have a
+-- drink.
+data DrinkSize = Fake | Sip | Swallow | Gulp
                deriving (Eq, Read, Show)
 
 instance FromString DrinkSize where
@@ -52,13 +54,15 @@ instance FromString DrinkSize where
     "sip"     -> Just Sip
     "swallow" -> Just Swallow
     "gulp"    -> Just Gulp
+    "fake"    -> Just Fake
     _         -> Nothing
 
 instance Arbitrary DrinkSize where
   arbitrary = oneof [pure Gulp, pure Swallow, pure Sip]
-  shrink Gulp = [Swallow, Sip]
-  shrink Swallow = [Sip]
-  shrink Sip = []
+  shrink Gulp = [Swallow, Sip, Fake]
+  shrink Swallow = [Sip, Fake]
+  shrink Sip = [Fake]
+  shrink Fake = []
 
 -- | A drink - when and how much.
 data Drink =

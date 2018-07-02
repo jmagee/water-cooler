@@ -23,3 +23,9 @@ run (Options common command) = do
     NextDrink       ->
       timeTilNextDrink env >>= \seconds ->
         putStrLn $ "Next drink in: " ++ show seconds
+
+    NotThirsty      ->
+      updateTimeTilNextDrink env 600 >> putStrLn "Water is essential"
+
+    NoWater         ->
+      updateTimeTilNextDrink env 3600 >> putStrLn "Fetch some more water?"
