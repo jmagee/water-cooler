@@ -15,11 +15,13 @@ module WaterCooler
 , mkEnv         -- From WaterCooler.Env
 , WaterCooler
 , Optional (..) -- From Data.Optional
+, version       -- From WaterCooler.Version
 ) where
 
 import           WaterCooler.Env
 import           WaterCooler.FromString
 import           WaterCooler.Internal
+import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Time              (NominalDiffTime, diffUTCTime)

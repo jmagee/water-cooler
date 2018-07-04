@@ -36,7 +36,11 @@ data Options = Options Common Command deriving (Show)
 
 -- | Parse the full command line.
 parseCommandLine :: Parser Options
-parseCommandLine = Options <$> parseCommon <*> parseCommand
+parseCommandLine = vers *> (Options <$> parseCommon <*> parseCommand)
+  where
+    vers = infoOption version (  long "version"
+                              <> short 'v'
+                              <> help "Display version")
 
 parseCommon :: Parser Common
 parseCommon = Common

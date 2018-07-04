@@ -11,7 +11,7 @@ import           System.FilePath.Posix (pathSeparator)
 main :: IO ()
 main = run =<< execParser (parseCommandLine `withInfo` infoStr)
   where
-    infoStr = "The water cooler " -- ++ version
+    infoStr = "The water cooler " ++ version
 
 -- | Insert a system specific path separator.
 slash :: FilePath -> FilePath -> FilePath
