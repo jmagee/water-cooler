@@ -18,7 +18,8 @@ import           Options.Applicative       hiding (optional)
 import           Options.Applicative.Types (readerAsk)
 
 -- | Common options - these apply to multiple commands.
-data Common = Common Int
+data Common = Common
+                (Optional Integer) -- seconds until next drink
             deriving (Show)
 
 -- | Commands.
@@ -36,7 +37,8 @@ parseCommandLine :: Parser Options
 parseCommandLine = Options <$> parseCommon <*> parseCommand
 
 parseCommon :: Parser Common
-parseCommon = pure $ Common 1
+parseCommon = Common <$>
+  optional (option auto $ long "wait" <> metavar "N" <> help "Set time to next drink")
 
 parseCommand :: Parser Command
 parseCommand = subparser

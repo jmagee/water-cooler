@@ -3,7 +3,8 @@ module Main where
 import           CLOpts
 import           WaterCooler
 
-import           Data.Bool        (bool)
+import           Data.Bool     (bool)
+import           Data.Optional (defaultTo)
 
 main :: IO ()
 main = run =<< execParser (parseCommandLine `withInfo` infoStr)
@@ -11,11 +12,11 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
     infoStr = "The water cooler " -- ++ version
 
 run :: Options -> IO ()
-run (Options common command) = do
+run (Options (Common at) command) = do
   env <- mkEnv "/tmp/cooler.json" "/tmp/history.json"
   case command of
     DrinkWater size ->
-      drinkWater env size Default >> putStrLn "The cool water refreshes"
+      drinkWater env size (fromInteger <$> at) >> putStrLn "The cool water refreshes"
 
     Status          ->
       checkDrink env >>= bool (pure ()) (putStrLn "You are thirsty")
@@ -25,7 +26,9 @@ run (Options common command) = do
         putStrLn $ "Next drink in: " ++ show seconds
 
     NotThirsty      ->
-      updateTimeTilNextDrink env 600 >> putStrLn "Water is essential"
+      updateTimeTilNextDrink env (fromInteger (defaultTo 600 at)) >>
+        putStrLn "Water is essential"
 
     NoWater         ->
-      updateTimeTilNextDrink env 3600 >> putStrLn "Fetch some more water?"
+      updateTimeTilNextDrink env (fromInteger (defaultTo 3600 at)) >>
+        putStrLn "Fetch some more water?"
