@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 369f011065ab772472a1f0496c33bb2197a4c52f60e61edfc5b4f7d3f070bc43
+-- hash: 9d08a9fc88370e74dee2518aa5bdc69423723d2c7e004f4d6549c2e25d9dcd8e
 
 name:           water-cooler
 version:        0.1.0.0
@@ -58,6 +58,8 @@ executable water-cooler
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       base >=4.7 && <5
+    , directory
+    , filepath
     , optional-args
     , optparse-applicative
     , water-cooler

@@ -19,7 +19,9 @@ import           Options.Applicative.Types (readerAsk)
 
 -- | Common options - these apply to multiple commands.
 data Common = Common
-                (Optional Integer) -- seconds until next drink
+                (Optional Integer)  -- seconds until next drink
+                (Optional FilePath) -- Env cooler location
+                (Optional FilePath) -- Env history location
             deriving (Show)
 
 -- | Commands.
@@ -37,8 +39,16 @@ parseCommandLine :: Parser Options
 parseCommandLine = Options <$> parseCommon <*> parseCommand
 
 parseCommon :: Parser Common
-parseCommon = Common <$>
-  optional (option auto $ long "wait" <> metavar "N" <> help "Set time to next drink")
+parseCommon = Common
+  <$> optional (option auto $ long "wait"
+                            <> metavar "N"
+                            <> help "Set time to next drink")
+  <*> optional (strOption $ long "env-cooler"
+                          <> metavar "path"
+                          <> help "Absolute path of cooler file")
+  <*> optional (strOption $ long "env-history"
+                          <> metavar "path"
+                          <> help "Absolute path of history file")
 
 parseCommand :: Parser Command
 parseCommand = subparser

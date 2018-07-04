@@ -48,6 +48,8 @@ executables:
     - -Wall
     dependencies:
     - water-cooler
+    - directory
+    - filepath
     - optional-args
     - optparse-applicative
 
