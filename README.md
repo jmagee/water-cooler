@@ -86,6 +86,14 @@ Options
 |`--env-cooler`  |  Specify a custom cooler file, must be an absolute path.  |
 |`--env-history` |  Specify a custom history file, must be an absolute path. |
 
+Shell usage
+===========
+Embedding `water-cooler` within a shell prompt is pretty simple, a simple
+command such as `$(water-cooler status)`.  For convenience, a shell script is
+provided in the [scripts](scripts) directory which implements an interface
+similar to that provided by thirst.sh.  Simple source
+`scripts/water-cooler-script.sh` to make use of these shell functions.
+
 Acknowledgements
 ================
 [Thirsty](https://github.com/kalbhor/thirsty)
