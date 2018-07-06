@@ -93,6 +93,7 @@ spec = do
       env     <- mkEnv cooler history
       writeEnvRC rc env
       readEnvRC rc >>= (`shouldBe` env)
+      removeFile (toFilePath rc)
 
   describe "drinkWater" $
     it "everyday" $ do
