@@ -73,13 +73,13 @@ spec = do
   describe "overrideEnv" $
     it "overrides one" $ do
       startEnv <- mkEnv "/abs/path" "/also/abs/path"
-      overrideEnv startEnv (Specific "/abs/override") Default >>=
+      overrideEnv (Specific "/abs/override") Default startEnv >>=
         (`shouldBe` Env $(mkAbsFile "/abs/override") $(mkAbsFile "/also/abs/path"))
 
   describe "overrideEnv" $
     it "overrides all" $ do
       startEnv <- mkEnv "/abs/path" "/also/abs/path"
-      overrideEnv startEnv (Specific "/abs/override") (Specific "/abs/override2") >>=
+      overrideEnv (Specific "/abs/override") (Specific "/abs/override2") startEnv >>=
         (`shouldBe` Env $(mkAbsFile "/abs/override") $(mkAbsFile "/abs/override2"))
 
   describe "now" $
