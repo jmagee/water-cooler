@@ -13,6 +13,7 @@ module WaterCooler
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
 , mkEnv         -- From WaterCooler.Env
+, mkEnv'        -- From WaterCooler.Env
 , WaterCooler
 , Optional (..) -- From Data.Optional
 , version       -- From WaterCooler.Version

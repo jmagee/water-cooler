@@ -6,11 +6,12 @@ module WaterCoolerSpec ( spec ) where
 import           WaterCooler
 import           WaterCooler.Env
 import           WaterCooler.Internal
+import           WaterCooler.Util
 
 import           Control.Monad             (liftM2)
 import           Data.Time                 (addUTCTime, diffUTCTime)
 import           Path                      (Abs, Dir, Path, mkAbsFile,
-                                            parseAbsDir, parseRelFile,
+                                            parseAbsDir, parseRelFile, parseAbsFile,
                                             toFilePath, (</>))
 import           System.Directory          (doesFileExist, getCurrentDirectory,
                                             removeFile)
@@ -39,6 +40,30 @@ spec = do
       mkEnv "/abs/path" "/also/abs/path" >>=
         (`shouldBe` Env $(mkAbsFile "/abs/path") $(mkAbsFile "/also/abs/path"))
 
+  describe "mkEnv'" $
+    it "create an environment without defaults " $
+      mkEnv' (Specific "/abs/path") (Specific "/also/abs/path") >>=
+        (`shouldBe` Env $(mkAbsFile "/abs/path") $(mkAbsFile "/also/abs/path"))
+
+  describe "mkEnv'" $
+    it "create an environment with some defaults " $ do
+      pp <- mkHomePath ".water-cooler-history" >>= parseAbsFile
+      mkEnv' (Specific "/abs/path") Default >>=
+        (`shouldBe` Env $(mkAbsFile "/abs/path") pp)
+
+  describe "mkEnv'" $
+    it "create an environment with both defaults " $ do
+      pp0 <- mkHomePath ".water-cooler" >>= parseAbsFile
+      pp1 <- mkHomePath ".water-cooler-history" >>= parseAbsFile
+      mkEnv' Default Default >>= (`shouldBe` Env pp0 pp1)
+  
+  describe "Env and FakeEnv" $
+    it "can round trip" $ do
+      pp0 <- mkHomePath ".water-cooler"
+      pp1 <- mkHomePath ".water-cooler-history"
+      real <- mkEnv pp0 pp1
+      mkEnvFromFake (toFake real) >>= (`shouldBe` real)
+
   describe "now" $
     it "seems somewhat sane" $ do
       diff <- diffUTCTime <$> now <*> now
@@ -59,6 +84,15 @@ spec = do
       let expected = addUTCTime t' howSoonIs
       let actual   = nextDrink wc
       assert $ diffUTCTime expected actual < magicTimeThreshold
+
+  describe "readEnvRC and writeEnvRC" $
+    it "work" $ do
+      cooler  <- getFileName "testFileCooler"
+      history <- getFileName "testFileHistory"
+      rc      <- getFileName "testRC" >>= parseAbsFile
+      env     <- mkEnv cooler history
+      writeEnvRC rc env
+      readEnvRC rc >>= (`shouldBe` env)
 
   describe "drinkWater" $
     it "everyday" $ do

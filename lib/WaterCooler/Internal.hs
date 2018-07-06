@@ -17,21 +17,17 @@ module WaterCooler.Internal
 ) where
 
 import           WaterCooler.FromString
+import           WaterCooler.Util
 
 import           Control.Monad             (mzero)
 import           Data.Aeson                (FromJSON, ToJSON, Value (..),
                                             eitherDecode, object, parseJSON,
                                             toJSON, (.:), (.=))
-import           Data.Aeson.Encode.Pretty  (encodePretty)
-import           Data.Bool                 (bool)
-import qualified Data.ByteString.Lazy      as BS (ByteString, null, readFile,
-                                                  writeFile)
 import           Data.Char                 (toLower)
 import           Data.Time                 (NominalDiffTime, UTCTime,
                                             addUTCTime, diffUTCTime)
 import           Data.Time.Clock           (getCurrentTime)
-import           Path                      (Abs, File, Path, toFilePath)
-import           System.Directory          (doesFileExist)
+import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
 
@@ -112,17 +108,9 @@ drink size = Drink size <$> now
 now :: IO UTCTime
 now = {-utcToLocalTime <$> getCurrentTimeZone <*> -}getCurrentTime
 
--- | Write a json file.
-writeJSON :: ToJSON a => Path Abs File -> a -> IO ()
-writeJSON file thing = BS.writeFile (toFilePath file) $ encodePretty thing
-
 -- | Write the water cooler file.
 writeWaterCooler :: Path Abs File -> WaterCooler -> IO ()
 writeWaterCooler = writeJSON
-
--- | Bail out error when parsing a json file
-jbail :: Path Abs File -> String -> a
-jbail f e = error $ "Error parsing JSON file <" ++ toFilePath f ++ ">:" ++ e
 
 -- | Read the water cooler file.
 readWaterCooler :: Path Abs File -> IO (Maybe WaterCooler)
@@ -145,13 +133,3 @@ archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
 -- | The time of the next drink
 nextDrink :: WaterCooler -> UTCTime
 nextDrink (WaterCooler (Drink _ lastd) next) = addUTCTime next lastd
-
--- | Read the file, unless it is empty, in which case return a default value
-unlessEmpty :: Path b File -> a -> (BS.ByteString -> a) -> IO a
-unlessEmpty file def action =
-  let f = toFilePath file
-  in doesFileExist f >>= bool (pure def) (go <$> BS.readFile f)
-  where
-    go contents
-      | BS.null contents = def
-      | otherwise = action contents

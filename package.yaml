@@ -32,6 +32,7 @@ library:
     - bytestring
     - directory
     - exceptions
+    - filepath
     - gitrev
     - optional-args
     - path
@@ -50,7 +51,6 @@ executables:
     dependencies:
     - water-cooler
     - directory
-    - filepath
     - optional-args
     - optparse-applicative
 

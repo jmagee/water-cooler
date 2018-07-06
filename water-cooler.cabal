@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e91ffce464c8505eb14a2c27724a3be6e2217dc5fda95c64e06e2424cea927ff
+-- hash: ea07a4f3b50e291374b213330e57e0806e21982998d59f73b70ebdf8a8580f06
 
 name:           water-cooler
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       WaterCooler.Env
       WaterCooler.FromString
       WaterCooler.Internal
+      WaterCooler.Util
       WaterCooler.Version
   other-modules:
       Paths_water_cooler
@@ -44,6 +45,7 @@ library
     , bytestring
     , directory
     , exceptions
+    , filepath
     , gitrev
     , optional-args
     , path
@@ -61,7 +63,6 @@ executable water-cooler
   build-depends:
       base >=4.7 && <5
     , directory
-    , filepath
     , optional-args
     , optparse-applicative
     , water-cooler
