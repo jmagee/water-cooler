@@ -12,8 +12,11 @@ module WaterCooler
 , Drink
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
+, getEnvRC      -- From WaterCooler.Env
 , mkEnv         -- From WaterCooler.Env
 , mkEnv'        -- From WaterCooler.Env
+, overrideEnv   -- From WaterCooler.Env
+, putEnvRC      -- From WaterCooler.Env
 , WaterCooler
 , Optional (..) -- From Data.Optional
 , version       -- From WaterCooler.Version

@@ -3,10 +3,13 @@
 
 module WaterCooler.Env
 ( Env (..)
+, getEnvRC
 , mkEnv
 , mkEnv'
 , mkEnvFromFake
 , readEnvRC
+, overrideEnv
+, putEnvRC
 , toFake
 , writeEnvRC
 ) where
@@ -39,6 +42,25 @@ mkEnv' a b = do
   defHistory <- mkHomePath ".water-cooler-history"
   mkEnv (defaultTo defCooler a) (defaultTo defHistory b)
 
+-- | Override an Env with optionals.
+overrideEnv :: Optional FilePath -> Optional FilePath -> Env -> IO Env
+overrideEnv a b env =
+  let cooler  = toFilePath $ _cooler env
+      history = toFilePath $ _history env
+  in mkEnv (defaultTo cooler a) (defaultTo history b)
+
+-- | Get Env from RC file
+getEnvRC :: IO Env
+getEnvRC = mkHomePath ".water-cooler.rc" >>= parseAbsFile >>= readEnvRC
+
+-- | Put Env to a RC file
+putEnvRC :: Env -> IO FilePath
+putEnvRC env = do
+  rc   <- mkHomePath ".water-cooler.rc"
+  file <- parseAbsFile rc
+  writeEnvRC file env
+  pure rc
+
 -- | Fake env data used as a temporary to parse from JSON and then do
 -- the File parse conversion (which involves MonadThrow.)
 data FakeEnv =
@@ -46,7 +68,7 @@ data FakeEnv =
           , _fakeHistory :: FilePath
           } deriving (Show)
 
-instance FromJSON (FakeEnv) where
+instance FromJSON FakeEnv where
   parseJSON (Object v) =
     FakeEnv <$> v .: "cooler"
             <*> v .: "history"

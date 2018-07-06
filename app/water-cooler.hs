@@ -13,7 +13,7 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
 
 run :: Options -> IO ()
 run (Options (Common at cooler history) command) = do
-  env <- mkEnv' cooler history
+  env <- overrideEnv cooler history =<< getEnvRC
   case command of
     DrinkWater size ->
       drinkWater env size (fromInteger <$> at) >> putStrLn "The cool water refreshes"
@@ -32,3 +32,6 @@ run (Options (Common at cooler history) command) = do
     NoWater         ->
       updateTimeTilNextDrink env (fromInteger (defaultTo 3600 at)) >>
         putStrLn "Fetch some more water?"
+
+    Mkrc            ->
+      putEnvRC env >>= \f -> putStrLn $ "Wrote " ++ f

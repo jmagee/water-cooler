@@ -56,13 +56,31 @@ spec = do
       pp0 <- mkHomePath ".water-cooler" >>= parseAbsFile
       pp1 <- mkHomePath ".water-cooler-history" >>= parseAbsFile
       mkEnv' Default Default >>= (`shouldBe` Env pp0 pp1)
-  
+
   describe "Env and FakeEnv" $
     it "can round trip" $ do
       pp0 <- mkHomePath ".water-cooler"
       pp1 <- mkHomePath ".water-cooler-history"
       real <- mkEnv pp0 pp1
       mkEnvFromFake (toFake real) >>= (`shouldBe` real)
+
+  describe "overrideEnv" $
+    it "overrides none" $ do
+      startEnv <- mkEnv "/abs/path" "/also/abs/path"
+      overrideEnv Default Default startEnv >>=
+        (`shouldBe` Env $(mkAbsFile "/abs/path") $(mkAbsFile "/also/abs/path"))
+
+  describe "overrideEnv" $
+    it "overrides one" $ do
+      startEnv <- mkEnv "/abs/path" "/also/abs/path"
+      overrideEnv startEnv (Specific "/abs/override") Default >>=
+        (`shouldBe` Env $(mkAbsFile "/abs/override") $(mkAbsFile "/also/abs/path"))
+
+  describe "overrideEnv" $
+    it "overrides all" $ do
+      startEnv <- mkEnv "/abs/path" "/also/abs/path"
+      overrideEnv startEnv (Specific "/abs/override") (Specific "/abs/override2") >>=
+        (`shouldBe` Env $(mkAbsFile "/abs/override") $(mkAbsFile "/abs/override2"))
 
   describe "now" $
     it "seems somewhat sane" $ do
