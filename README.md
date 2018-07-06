@@ -94,6 +94,23 @@ provided in the [scripts](scripts) directory which implements an interface
 similar to that provided by thirst.sh.  Simple source
 `scripts/water-cooler-script.sh` to make use of these shell functions.
 
+Shell completion
+----------------
+Shell completion can be enabled for different shells.  For example:
+
+```
+$ source <(water-cooler --bash-completion-script `which water-cooooler`)
+```
+
+Normally, the output of --bash-completion-script would be saved to a file and
+stored in a completion directory (e.g. `/etc/bash_completion.d`.)
+
+Completion options:
+
+ * `--bash-completion-script`
+ * `--zsh-completion-script`
+ * `--fish-completion-script`
+
 Acknowledgements
 ================
 [Thirsty](https://github.com/kalbhor/thirsty)
