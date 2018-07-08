@@ -24,7 +24,7 @@ run (Options com command) =
                            (_timeFormat com)
                            (_thirstyText com)
            >>= \env -> dispatchCommand env command $ _wait com
-  
+
 dispatchCommand :: Env -> Command -> Optional Integer -> IO ()
 dispatchCommand env (DrinkWater size) wait =
   drinkWater env size (fromInteger <$> wait) >>= T.putStrLn
