@@ -39,78 +39,87 @@ spec = do
 
   describe "mkEnv" $
     it "creates an environment" $
-      mkEnv "/abs/path" "/also/abs/path" (singleton "nice")  "%T" >>=
+      mkEnv "/abs/path" "/also/abs/path" (singleton "nice")  "%T" "oh my" >>=
         (`shouldBe`
           Env $(mkAbsFile "/abs/path")
               $(mkAbsFile "/also/abs/path")
               (singleton "nice")
-              "%T")
+              "%T"
+              "oh my")
 
   describe "mkEnv'" $
     it "create an environment without defaults " $
       mkEnv' (Specific "/abs/path")
              (Specific "/also/abs/path")
              ((Specific . singleton) "nice")
-             (Specific "%F") >>=
+             (Specific "%F")
+             (Specific "foo") >>=
         (`shouldBe`
           Env $(mkAbsFile "/abs/path")
               $(mkAbsFile "/also/abs/path")
               (singleton "nice")
-              "%F")
+              "%F"
+              "foo")
 
   describe "mkEnv'" $
     it "create an environment with some defaults " $ do
       pp <- mkHomePath ".water-cooler-history" >>= parseAbsFile
-      mkEnv' (Specific "/abs/path") Default Default Default >>=
-        (`shouldBe` Env $(mkAbsFile "/abs/path") pp drinkFlavors "%F %T")
+      mkEnv' (Specific "/abs/path") Default Default Default Default >>=
+        (`shouldBe`
+          Env $(mkAbsFile "/abs/path") pp drinkFlavors "%F %T" "You're thirsty")
 
   describe "mkEnv'" $
     it "create an environment with all defaults " $ do
       pp0 <- mkHomePath ".water-cooler" >>= parseAbsFile
       pp1 <- mkHomePath ".water-cooler-history" >>= parseAbsFile
-      mkEnv' Default Default Default Default >>=
-        (`shouldBe` Env pp0 pp1 drinkFlavors "%F %T")
+      mkEnv' Default Default Default Default Default >>=
+        (`shouldBe` Env pp0 pp1 drinkFlavors "%F %T" "You're thirsty")
 
   describe "Env and FakeEnv" $
     it "can round trip" $ do
       pp0 <- mkHomePath ".water-cooler"
       pp1 <- mkHomePath ".water-cooler-history"
-      real <- mkEnv pp0 pp1 (singleton "foo") "%F"
+      real <- mkEnv pp0 pp1 (singleton "foo") "%F" "foo"
       mkEnvFromFake (toFake real) >>= (`shouldBe` real)
 
   describe "overrideEnv" $
     it "overrides none" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%F"
-      overrideEnv Default Default (singleton Default) Default startEnv >>=
+      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%F" "bar"
+      overrideEnv Default Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env $(mkAbsFile "/abs/path")
               $(mkAbsFile "/also/abs/path")
               (singleton "foo")
-              "%F")
+              "%F"
+              "bar")
 
   describe "overrideEnv" $
     it "overrides one" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T"
-      overrideEnv (Specific "/abs/override") Default (singleton Default) Default startEnv >>=
+      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T" "bar"
+      overrideEnv (Specific "/abs/override")
+                  Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env $(mkAbsFile "/abs/override")
               $(mkAbsFile "/also/abs/path")
               (singleton "foo")
-              "%T")
+              "%T"
+              "bar")
 
   describe "overrideEnv" $
     it "overrides all" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T"
+      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T" "snoo"
       overrideEnv (Specific "/abs/override")
                   (Specific "/abs/override2")
                   ((singleton . Specific) "bar")
                   (Specific "%F")
+                  (Specific "boo")
                   startEnv >>=
         (`shouldBe`
           Env $(mkAbsFile "/abs/override")
               $(mkAbsFile "/abs/override2")
               (singleton "bar")
-              "%F")
+              "%F"
+              "boo")
 
   describe "now" $
     it "seems somewhat sane" $ do
@@ -137,14 +146,14 @@ spec = do
     it "is none" $ do
       pp0 <- Specific <$> getFileName "testFileCooler"
       pp1 <- Specific <$> getFileName "testFileHistory"
-      real <- mkEnv' pp0 pp1 Default Default
+      real <- mkEnv' pp0 pp1 Default Default Default
       getLastDrink real >>= (`shouldBe` Nothing)
 
   describe "getLastDrink" $
     it "is a drink" $ do
       pp0 <- getFileName "testFileCooler"
       pp1 <- getFileName "testFileHistory"
-      real <- mkEnv' (Specific pp0) (Specific pp1) Default Default
+      real <- mkEnv' (Specific pp0) (Specific pp1) Default Default Default
       _ <- drinkWater real (Specific Sip) (Specific 0)
       d <- drink Sip
       getLastDrink real >>= (`shouldBe` Just d)
@@ -156,7 +165,7 @@ spec = do
       cooler  <- getFileName "testFileCooler"
       history <- getFileName "testFileHistory"
       rc      <- getFileName "testRC" >>= parseAbsFile
-      env     <- mkEnv cooler history (singleton "flavor text") "%F"
+      env     <- mkEnv cooler history (singleton "flavor text") "%F" "thirsty"
       writeEnvRC rc env
       readEnvRC rc >>= (`shouldBe` env)
       removeFile (toFilePath rc)
@@ -165,7 +174,7 @@ spec = do
     it "everyday" $ do
       cooler  <- getFileName "testFileCooler"
       history <- getFileName "testFileHistory"
-      env     <- mkEnv cooler history drinkFlavors "%F"
+      env     <- mkEnv cooler history drinkFlavors "%F" "thirsty"
 
       -- FIXME: Split these out into multiple tests, otherwise it is hard
       -- to tell which one actually failed.

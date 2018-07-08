@@ -17,16 +17,16 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
 
 run :: Options -> IO ()
 run (Options (Common at cooler history sipText swallowText
-                     gulpText fakeText emptyText timeFormat)
+                     gulpText fakeText emptyText thirstyText timeFormat)
              command) = do
   let texts = fromList [sipText, swallowText, gulpText, fakeText, emptyText]
-  env <- overrideEnv cooler history texts timeFormat =<< getEnvRC
+  env <- overrideEnv cooler history texts timeFormat thirstyText =<< getEnvRC
   case command of
     DrinkWater size ->
       drinkWater env size (fromInteger <$> at) >>= T.putStrLn
 
     Status          ->
-      checkDrink env >>= bool (pure ()) (putStrLn "You are thirsty")
+      checkDrink env >>= bool (pure ()) (T.putStrLn (envGetThirstyText env))
 
     NextDrink       ->
       timeTilNextDrink env >>= \seconds ->

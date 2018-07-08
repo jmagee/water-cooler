@@ -18,6 +18,11 @@ module WaterCooler
 , mkEnv'        -- From WaterCooler.Env
 , overrideEnv   -- From WaterCooler.Env
 , putEnvRC      -- From WaterCooler.Env
+, envGetCooler
+, envGetHistory
+, envGetDrinkText
+, envGetTimeFormat
+, envGetThirstyText
 , WaterCooler
 , Optional (..) -- From Data.Optional
 , version       -- From WaterCooler.Version
@@ -35,7 +40,7 @@ import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
-drinkWater (Env coolerFile historyFile drinkText _) size next = do
+drinkWater (Env coolerFile historyFile drinkText _ _) size next = do
   let realSize = defaultTo Swallow size
   beverage <- drink realSize
   let cooler = WaterCooler beverage $ defaultTo 1200 next
@@ -45,16 +50,20 @@ drinkWater (Env coolerFile historyFile drinkText _) size next = do
 
 -- | Check if it is time for a drink.
 checkDrink :: Env -> IO Bool
-checkDrink (Env cooler _ _ _) = readWaterCooler cooler >>= \case
+checkDrink env = getCooler env >>= \case
   Just chill  -> (nextDrink chill <=) <$> now
   Nothing     -> pure True
 
 -- | Check how long until the next drink.
 timeTilNextDrink :: Env -> IO NominalDiffTime
-timeTilNextDrink (Env cooler _ _ _) = readWaterCooler cooler >>= \case
+timeTilNextDrink env = getCooler env >>= \case
   Just chill -> diffUTCTime (nextDrink chill) <$> now
   Nothing    -> let n = now in diffUTCTime <$> n <*> n
 
 -- | Get the last drink.
 getLastDrink :: Env -> IO (Maybe Drink)
-getLastDrink (Env cooler _ _ _) = lastDrink <$$> readWaterCooler cooler
+getLastDrink env = lastDrink <$$> getCooler env
+
+-- | Help to read water cooler from the environment.
+getCooler :: Env -> IO (Maybe WaterCooler)
+getCooler = readWaterCooler . envGetCooler

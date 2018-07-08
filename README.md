@@ -98,6 +98,7 @@ Options
 |`--env-gulp-text` text        | Specify a message to display after gulping. |
 |`--env-fake-text` text        | Specify a message to display when skipping a drink. |
 |`--env-empty-text` text       | Specify a message to display when out of water. |
+|`--env-thirsty-text` text     | Specify a message to display when thirsty. |
 |`--env-timeformat` format-text| Specify theh Unix-style date/time format string. |
 
 Shell usage
@@ -164,6 +165,7 @@ The RC file is in the following JSON format:
     ],
     "history": "This must be an absolute path to the cooler file"
     "cooler": "This must be an absolute path to the history file"
+    "thirstyText": "This is the text when thirsty"
     "timeFormat": "Unix-style time format string"
 }
 ```

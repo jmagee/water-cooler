@@ -4,6 +4,11 @@
 module WaterCooler.Env
 ( Env (..)
 , drinkFlavors
+, envGetCooler
+, envGetHistory
+, envGetDrinkText
+, envGetTimeFormat
+, envGetThirstyText
 , getEnvRC
 , mergeDrinkFlavors
 , mkEnv
@@ -29,10 +34,11 @@ import qualified Data.Sequence       as S (zipWith)
 import           Data.Text           (Text)
 import           Path                (Abs, File, Path, parseAbsFile, toFilePath)
 
-data Env = Env { _cooler     :: Path Abs File
-               , _history    :: Path Abs File
-               , _drinkText  :: Seq Text
-               , _timeFormat :: Text
+data Env = Env { _cooler      :: Path Abs File
+               , _history     :: Path Abs File
+               , _drinkText   :: Seq Text
+               , _timeFormat  :: Text
+               , _thirstyText :: Text
                } deriving (Eq, Show)
 
 -- | Create an Env.
@@ -41,27 +47,31 @@ mkEnv :: MonadThrow m
       -> FilePath      -- ^ History file
       -> Seq Text      -- ^ Drink flavor text
       -> Text          -- ^ Time format string
+      -> Text          -- ^ Thirsty flavor text
       -> m Env
-mkEnv a b c d = do
+mkEnv a b c d e = do
   cooler  <- parseAbsFile a
   history <- parseAbsFile b
-  pure $ Env cooler history c d
+  pure $ Env cooler history c d e
 
 -- | Create an Env with optionals.
 mkEnv' :: Optional FilePath
        -> Optional FilePath
        -> Optional (Seq Text)
        -> Optional Text
+       -> Optional Text
        -> IO Env
-mkEnv' a b c d = do
+mkEnv' a b c d e = do
   defCooler  <- mkHomePath ".water-cooler"
   defHistory <- mkHomePath ".water-cooler-history"
   let defDrink = drinkFlavors
   let defTime = "%F %T"
+  let defThirsty = "You're thirsty"
   mkEnv (defaultTo defCooler a)
         (defaultTo defHistory b)
         (defaultTo defDrink c)
         (defaultTo defTime d)
+        (defaultTo defThirsty e)
 
 -- FIXME: Should this be moved closer to drinkSize?
 -- | Drink flavor texts
@@ -84,17 +94,20 @@ overrideEnv :: Optional FilePath
             -> Optional FilePath
             -> Seq (Optional Text)
             -> Optional Text
+            -> Optional Text
             -> Env
             -> IO Env
-overrideEnv a b c d env =
+overrideEnv a b c d e env =
   let cooler    = toFilePath $ _cooler env
       history   = toFilePath $ _history env
       drinkText =  _drinkText env
       dt        = _timeFormat env
+      thirstText= _thirstyText env
   in mkEnv (defaultTo cooler a)
            (defaultTo history b)
            (mergeDrinkFlavors drinkText c)
            (defaultTo dt d)
+           (defaultTo thirstText e)
 
 -- | Get Env from RC file
 getEnvRC :: IO Env
@@ -111,10 +124,11 @@ putEnvRC env = do
 -- | Fake env data used as a temporary to parse from JSON and then do
 -- the File parse conversion (which involves MonadThrow.)
 data FakeEnv =
-  FakeEnv { _fakeCooler     :: FilePath
-          , _fakeHistory    :: FilePath
-          , _fakeDrinkText  :: Seq Text
-          , _fakeTimeFormat :: Text
+  FakeEnv { _fakeCooler      :: FilePath
+          , _fakeHistory     :: FilePath
+          , _fakeDrinkText   :: Seq Text
+          , _fakeTimeFormat  :: Text
+          , _fakethirstyText :: Text
           } deriving (Show)
 
 instance FromJSON FakeEnv where
@@ -123,30 +137,54 @@ instance FromJSON FakeEnv where
             <*> v .: "history"
             <*> v .: "drinkText"
             <*> v .: "timeFormat"
+            <*> v .: "thirstyText"
   parseJSON _ = mzero
 
 instance ToJSON FakeEnv where
-  toJSON (FakeEnv cooler history drinkText timeFormat) =
-    object [ "cooler"     .= cooler
-           , "history"    .= history
-           , "drinkText"  .= drinkText
-           , "timeFormat" .= timeFormat
+  toJSON (FakeEnv cooler history drinkText timeFormat thirstyText) =
+    object [ "cooler"      .= cooler
+           , "history"     .= history
+           , "drinkText"   .= drinkText
+           , "timeFormat"  .= timeFormat
+           , "thirstyText" .= thirstyText
            ]
 
 -- | Create an Env from a FakeEnv
 mkEnvFromFake :: MonadThrow m => FakeEnv -> m Env
-mkEnvFromFake (FakeEnv a b c d) = mkEnv a b c d
+mkEnvFromFake (FakeEnv a b c d e) = mkEnv a b c d e
 
 -- | Create an Env to a FakeEnv
 toFake :: Env -> FakeEnv
-toFake (Env a b c d) = FakeEnv (toFilePath a) (toFilePath b) c d
+toFake (Env a b c d e) = FakeEnv (toFilePath a) (toFilePath b) c d e
 
 -- | Read Env rc file
 readEnvRC :: Path Abs File -> IO Env
-readEnvRC file =
-  join $ unlessEmpty file (mkEnv' Default Default Default Default) $ \contents ->
+readEnvRC file = join $
+  unlessEmpty file (mkEnv' Default Default Default Default Default) $ \contents ->
   either (jbail file) mkEnvFromFake (eitherDecode contents)
 
 -- | Write Env rc file.
 writeEnvRC:: Path Abs File -> Env -> IO ()
 writeEnvRC file env = writeJSON file $ toFake env
+
+
+-- Public Env getters.
+-- | Get the cooler from the environment.
+envGetCooler :: Env -> Path Abs File
+envGetCooler = _cooler
+
+-- | Get the history from the environment.
+envGetHistory :: Env -> Path Abs File
+envGetHistory = _history
+
+-- | Get the drink text from the environment.
+envGetDrinkText:: Env -> Seq Text
+envGetDrinkText = _drinkText
+
+-- | Get the time format from the environment.
+envGetTimeFormat :: Env -> Text
+envGetTimeFormat = _timeFormat
+
+-- | Get the thirsty text from the environment.
+envGetThirstyText :: Env -> Text
+envGetThirstyText = _thirstyText

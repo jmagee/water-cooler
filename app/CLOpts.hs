@@ -28,6 +28,7 @@ data Common = Common
                 (Optional Text)     -- Env drink gulp text
                 (Optional Text)     -- Env drink fake text
                 (Optional Text)     -- Env drink empty text
+                (Optional Text)     -- Env thirsty text
                 (Optional Text)     -- Env date/time format text
             deriving (Show)
 
@@ -83,6 +84,10 @@ parseCommon = Common
   <*> optional (strOption $ long "env-empty-text"
                           <> metavar "flavor text"
                           <> help "Message to display when out of water"
+                          <> hidden)
+  <*> optional (strOption $ long "env-thirsty-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display when thirsty"
                           <> hidden)
   <*> optional (strOption $ long "env-timeformat"
                           <> metavar "time format"
