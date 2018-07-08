@@ -8,10 +8,11 @@ blatant rip-off of [thirsty.sh](https://github.com/kalbhor/thirsty).
 `thirsty.sh` is nice tool - I found it tremendously improved my water
 consumption throughout the day.  However, being a simple shell script, it had
 some limitations - namely that it wasn't convenient to integrate into non-shell
-environment (_the blasphemy_!)
+environment (non-shell environment? _pure blasphemy_!)
 
 Screenshot
 ==========
+Coming soon.
 
 Installation
 ============
@@ -53,7 +54,14 @@ Check time until the next drink
 -------------------------------
 `$ water-cooler next`
 
-The until the next drink is displayed in seconds.
+The time until the next drink is displayed in seconds.
+
+Check time since last drink
+---------------------------
+`$ water-cooler last`
+
+The last drink size and time is display.  The default format of the time is
+`YYYY-MM-DD HH:MM:SS`.  To override, see the option `--env-timeformat`.
 
 You are not thirsty
 -------------------
@@ -78,17 +86,23 @@ until the next drink reminder.
 Options
 =======
 
-|                |                    |
-+----------------+--------------------+
-|`--help`        | Display help       |
-|`--version`     | Display version    |
-| `--wait N`     | Set a custom value for the number of seconds for the next drink.  Effects only `drink`, `not-thirsty`, and `no-water` commands. |
-|`--env-cooler`  |  Specify a custom cooler file, must be an absolute path.  |
-|`--env-history` |  Specify a custom history file, must be an absolute path. |
+|                              |                    |
++------------------------------+--------------------+
+|`--help`                      | Display help       |
+|`--version`                   | Display version    |
+| `--wait N`                   | Set a custom value for the number of seconds for the next drink.  Effects only `drink`, `not-thirsty`, and `no-water` commands. |
+|`--env-cooler`                | Specify a custom cooler file, must be an absolute path.  |
+|`--env-history`               | Specify a custom history file, must be an absolute path. |
+|`--env-sip-text` text         | Specify a message to display after sipping.    |
+|`--env-swallow-text` text     | Specify a message to display after swallowing. |
+|`--env-gulp-text` text        | Specify a message to display after gulping. |
+|`--env-fake-text` text        | Specify a message to display when skipping a drink. |
+|`--env-empty-text` text       | Specify a message to display when out of water. |
+|`--env-timeformat` format-text| Specify theh Unix-style date/time format string. |
 
 Shell usage
 ===========
-Embedding `water-cooler` within a shell prompt is pretty simple, a simple
+Embedding `water-cooler` within a shell prompt can be achieved via a
 command such as `$(water-cooler status)`.  For convenience, a shell script is
 provided in the [scripts](scripts) directory which implements an interface
 similar to that provided by thirst.sh.  Simple source
@@ -111,6 +125,53 @@ Completion options:
  * `--zsh-completion-script`
  * `--fish-completion-script`
 
+Customization
+=============
+It is possible to customize some aspects of `water-cooler`.
+This can be done via command line options or via a RC file.
+
+For example, let's suppose one desired to see the text "Way to go" after swallows
+and gulps, and the text "That's not enough!" after sips.
+This could be achieved via command line options:
+
+`water-cooler drink sip --env-sip-text "That's not enough"`
+
+`water-cooler swallow sip --env-swallow-text "Way to go"`
+
+`water-cooler gulp sip --env-swallow-text "Way to go"`
+
+Alternatively, the preferred default can be saved in a RC file of the form:
+`$HOME/.water-cooler.rc`
+
+This can be created and populated automatically with the `mkrc` command:
+```
+water-cooler mkrc --env-sip-text "That's not enough" \
+                  --env-swallow-text "Way to go" \
+                  --env-gulp-text "Way to go"
+```
+
+The resulting RC file can be manually edited.
+
+The RC file is in the following JSON format:
+```
+{
+    "drinkText": [
+        "This is the sip text",
+        "This is the swallow text",
+        "This is the gulp text",
+        "This is the not thirsty text",
+        "This is the out of water text?"
+    ],
+    "history": "This must be an absolute path to the cooler file"
+    "cooler": "This must be an absolute path to the history file"
+    "timeFormat": "Unix-style time format string"
+}
+```
+
+To generate/see a RC file with the default values, simply run `water-cooler mkrc`.
+
 Acknowledgements
 ================
-[Thirsty](https://github.com/kalbhor/thirsty)
+The original idea is from [Thirsty](https://github.com/kalbhor/thirsty), which
+is a great tool.  If `water-cooler` seems a bit too heavy weight, I'd strongly
+suggest giving thirsty a try.

@@ -84,8 +84,8 @@ parseCommon = Common
                           <> metavar "flavor text"
                           <> help "Message to display when out of water"
                           <> hidden)
-  <*> optional (strOption $ long "env-timeformat-text"
-                          <> metavar "time format text"
+  <*> optional (strOption $ long "env-timeformat"
+                          <> metavar "time format"
                           <> help "Unix-style date/time format string"
                           <> hidden)
 
