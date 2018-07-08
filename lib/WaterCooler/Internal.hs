@@ -25,15 +25,16 @@ import           Data.Aeson                (FromJSON, ToJSON, Value (..),
                                             eitherDecode, object, parseJSON,
                                             toJSON, (.:), (.=))
 import           Data.Char                 (toLower)
+import           Data.Maybe                (fromMaybe)
+import           Data.Sequence             (Seq)
+import qualified Data.Sequence             as S (lookup)
+import           Data.Text                 (Text)
 import           Data.Time                 (NominalDiffTime, UTCTime,
                                             addUTCTime, diffUTCTime)
 import           Data.Time.Clock           (getCurrentTime)
 import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
-import Data.Sequence (Seq)
-import qualified Data.Sequence as S (lookup)
-import Data.Text (Text)
 
 -- | Magic time threshold.
 -- This threshold is used when comparing times.  Two times with a difference
@@ -66,10 +67,10 @@ instance Arbitrary DrinkSize where
 
 -- | Get a flavor text string corrosponding to the drink size.
 drinkSizeToFlavor :: Seq Text -> DrinkSize -> Text
-drinkSizeToFlavor s Sip = maybe "Undefined" id $ S.lookup 0 s
-drinkSizeToFlavor s Swallow = maybe "Undefined" id $ S.lookup 1 s
-drinkSizeToFlavor s Gulp = maybe "Undefined" id $ S.lookup 2 s
-drinkSizeToFlavor s Fake = maybe "Undefined" id $ S.lookup 3 s
+drinkSizeToFlavor s Sip = fromMaybe "Undefined" $ S.lookup 0 s
+drinkSizeToFlavor s Swallow = fromMaybe "Undefined" $ S.lookup 1 s
+drinkSizeToFlavor s Gulp = fromMaybe "Undefined" $ S.lookup 2 s
+drinkSizeToFlavor s Fake = fromMaybe "Undefined" $ S.lookup 3 s
 
 -- | A drink - when and how much.
 data Drink =

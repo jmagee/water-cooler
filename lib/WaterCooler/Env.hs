@@ -24,10 +24,10 @@ import           Data.Aeson          (FromJSON, ToJSON, Value (..),
                                       eitherDecode, object, parseJSON, toJSON,
                                       (.:), (.=))
 import           Data.Optional       (Optional (..), defaultTo)
+import           Data.Sequence       (Seq, empty, (|>))
+import qualified Data.Sequence       as S (zipWith)
 import           Data.Text           (Text)
 import           Path                (Abs, File, Path, parseAbsFile, toFilePath)
-import Data.Sequence (Seq, empty, (|>))
-import qualified Data.Sequence as S (zipWith)
 
 data Env = Env { _cooler    :: Path Abs File
                , _history   :: Path Abs File
@@ -65,7 +65,7 @@ drinkFlavors = empty
              |> "Water is essential"
 
 mergeDrinkFlavors :: Seq Text -> Seq (Optional Text) -> Seq Text
-mergeDrinkFlavors a b = S.zipWith choose a b
+mergeDrinkFlavors  = S.zipWith choose
   where
     choose x Default      = x
     choose _ (Specific y) = y
@@ -82,8 +82,7 @@ overrideEnv a b c env =
       drinkText =  _drinkText env
   in mkEnv (defaultTo cooler a)
            (defaultTo history b)
-        (mergeDrinkFlavors drinkText c)
-           --(defaultTo drinkText c) 
+           (mergeDrinkFlavors drinkText c)
 
 -- | Get Env from RC file
 getEnvRC :: IO Env

@@ -122,7 +122,7 @@ spec = do
     it "everyday" $ do
       cooler  <- getFileName "testFileCooler"
       history <- getFileName "testFileHistory"
-      env     <- mkEnv cooler history $ drinkFlavors
+      env     <- mkEnv cooler history drinkFlavors
 
       -- FIXME: Split these out into multiple tests, otherwise it is hard
       -- to tell which one actually failed.
