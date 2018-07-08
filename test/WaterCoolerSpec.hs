@@ -26,7 +26,7 @@ path1 :: Path Abs File
 path2 :: Path Abs File
 path3 :: Path Abs File
 path4 :: Path Abs File
-#ifdef ming32_HOST_OS
+#ifdef mingw32_HOST_OS
 path1 = [absfile|C:\abs\path|]
 path2 = [absfile|C:\also\abs\path|]
 path3 = [absfile|C:\abs\override|]
@@ -38,6 +38,10 @@ path3 = [absfile|/abs/override|]
 path4 = [absfile|/abs/override2|]
 #endif
 
+path1S :: FilePath
+path1S = toFilePath path1
+path2S :: FilePath
+path2S = toFilePath path2
 
 getCWD :: IO (Path Abs Dir)
 getCWD = getCurrentDirectory >>= parseAbsDir
@@ -57,7 +61,7 @@ spec = do
 
   describe "mkEnv" $
     it "creates an environment" $
-      mkEnv "/abs/path" "/also/abs/path" (singleton "nice")  "%T" "oh my" >>=
+      mkEnv path1S path2S (singleton "nice")  "%T" "oh my" >>=
         (`shouldBe`
           Env path1
               path2
@@ -67,8 +71,8 @@ spec = do
 
   describe "mkEnv'" $
     it "create an environment without defaults " $
-      mkEnv' (Specific "/abs/path")
-             (Specific "/also/abs/path")
+      mkEnv' (Specific path1S)
+             (Specific path2S)
              ((Specific . singleton) "nice")
              (Specific "%F")
              (Specific "foo") >>=
@@ -82,7 +86,7 @@ spec = do
   describe "mkEnv'" $
     it "create an environment with some defaults " $ do
       pp <- mkHomePath ".water-cooler-history" >>= parseAbsFile
-      mkEnv' (Specific "/abs/path") Default Default Default Default >>=
+      mkEnv' (Specific path1S) Default Default Default Default >>=
         (`shouldBe`
           Env path1 pp drinkFlavors "%F %T" "You're thirsty")
 
@@ -102,7 +106,7 @@ spec = do
 
   describe "overrideEnv" $
     it "overrides none" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%F" "bar"
+      startEnv <- mkEnv path1S path2S (singleton "foo") "%F" "bar"
       overrideEnv Default Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env path1
@@ -113,7 +117,7 @@ spec = do
 
   describe "overrideEnv" $
     it "overrides one" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T" "bar"
+      startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "bar"
       overrideEnv (Specific "/abs/override")
                   Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
@@ -125,7 +129,7 @@ spec = do
 
   describe "overrideEnv" $
     it "overrides all" $ do
-      startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%T" "snoo"
+      startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "snoo"
       overrideEnv (Specific "/abs/override")
                   (Specific "/abs/override2")
                   ((singleton . Specific) "bar")
