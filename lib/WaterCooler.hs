@@ -13,6 +13,7 @@ module WaterCooler
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
 , formatDrink   -- From WaterCooler.Internal
+, Env           -- From WaterCooler.Env
 , getEnvRC      -- From WaterCooler.Env
 , mkEnv         -- From WaterCooler.Env
 , mkEnv'        -- From WaterCooler.Env

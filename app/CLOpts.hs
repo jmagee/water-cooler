@@ -20,17 +20,17 @@ import           Options.Applicative.Types (readerAsk)
 
 -- | Common options - these apply to multiple commands.
 data Common = Common
-                (Optional Integer)  -- seconds until next drink
-                (Optional FilePath) -- Env cooler location
-                (Optional FilePath) -- Env history location
-                (Optional Text)     -- Env drink sip text
-                (Optional Text)     -- Env drink swallow text
-                (Optional Text)     -- Env drink gulp text
-                (Optional Text)     -- Env drink fake text
-                (Optional Text)     -- Env drink empty text
-                (Optional Text)     -- Env thirsty text
-                (Optional Text)     -- Env date/time format text
-            deriving (Show)
+            { _wait    :: Optional Integer  -- seconds until next drink
+            , _cooler  :: Optional FilePath -- Env cooler location
+            , _history :: Optional FilePath -- Env history location
+            , _sipText :: Optional Text     -- Env drink sip text
+            , _swallowText :: Optional Text     -- Env drink swallow text
+            , _gulpText    :: Optional Text     -- Env drink gulp text
+            , _fakeText    :: Optional Text     -- Env drink fake text
+            , _emptyText   :: Optional Text     -- Env drink empty text
+            , _thirstyText :: Optional Text     -- Env thirsty text
+            , _timeFormat  :: Optional Text     -- Env date/time format text
+            } deriving (Show)
 
 -- | Commands.
 data Command = DrinkWater (Optional DrinkSize)
@@ -105,7 +105,7 @@ parseCommand = subparser
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")
 
 parseDrink :: Parser Command
-parseDrink = DrinkWater <$> optional (argument parseDrinkSize $ 
+parseDrink = DrinkWater <$> optional (argument parseDrinkSize $
   metavar "Drink-Size" <> completeWith ["sip", "swallow", "gulp"])
 
 parseDrinkSize :: ReadM DrinkSize

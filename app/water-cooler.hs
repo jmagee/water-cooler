@@ -6,7 +6,8 @@ import           WaterCooler
 import           WaterCooler.Util
 
 import           Data.Bool        (bool)
-import           Data.Sequence    (fromList)
+import           Data.Sequence    (Seq, fromList)
+import           Data.Text        (Text)
 import qualified Data.Text.IO     as T (putStrLn)
 import           Data.Time        (NominalDiffTime)
 
@@ -16,35 +17,37 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
     infoStr = "The water cooler " ++ version
 
 run :: Options -> IO ()
-run (Options (Common at cooler history sipText swallowText
-                     gulpText fakeText emptyText thirstyText timeFormat)
-             command) = do
-  let texts = fromList [sipText, swallowText, gulpText, fakeText, emptyText]
-  env <- overrideEnv cooler history texts timeFormat thirstyText =<< getEnvRC
-  case command of
-    DrinkWater size ->
-      drinkWater env size (fromInteger <$> at) >>= T.putStrLn
+run (Options com command) =
+  getEnvRC >>= overrideEnv (_cooler com)
+                           (_history com)
+                           (extractFlavors com)
+                           (_timeFormat com)
+                           (_thirstyText com)
+           >>= \env -> dispatchCommand env command $ _wait com
+  
+dispatchCommand :: Env -> Command -> Optional Integer -> IO ()
+dispatchCommand env (DrinkWater size) wait =
+  drinkWater env size (fromInteger <$> wait) >>= T.putStrLn
 
-    Status          ->
-      checkDrink env >>= bool (pure ()) (T.putStrLn (envGetThirstyText env))
+dispatchCommand env Status _ =
+  checkDrink env >>= bool (pure ()) (T.putStrLn (envGetThirstyText env))
 
-    NextDrink       ->
-      timeTilNextDrink env >>= \seconds ->
-        putStrLn $ "Next drink in: " ++ show seconds
+dispatchCommand env NextDrink _ =
+  timeTilNextDrink env >>= \seconds -> putStrLn $ "Next drink in: " ++ show seconds
 
-    LastDrink       ->
-      getLastDrink env >>= \case
-        Nothing -> putStrLn "None"
-        Just d  -> formatDrink env d >>= T.putStrLn
+dispatchCommand env LastDrink _ =
+  getLastDrink env >>= \case
+    Nothing -> putStrLn "None"
+    Just d  -> T.putStrLn =<< formatDrink env d
 
-    NotThirsty      ->
-      drinkWater env (Specific Fake) (optionalTime 600 at) >>= T.putStrLn
+dispatchCommand env NotThirsty wait =
+  T.putStrLn =<< drinkWater env (Specific Fake) (optionalTime 600 wait)
 
-    NoWater         ->
-      drinkWater env (Specific Empty) (optionalTime 3600 at) >>= T.putStrLn
+dispatchCommand env NoWater wait =
+  T.putStrLn =<< drinkWater env (Specific Empty) (optionalTime 3600 wait)
 
-    Mkrc            ->
-      putEnvRC env >>= \f -> putStrLn $ "Wrote " ++ f
+dispatchCommand env Mkrc _ =
+  (\f -> putStrLn $ "Wrote " ++ f) =<< putEnvRC env
 
 -- | Select between a default Integer and an optional Integer and wrap the back
 -- up as a Specific NominalDiffTime.
@@ -52,3 +55,8 @@ run (Options (Common at cooler history sipText swallowText
 --                 optionalTime 200 (Specific 10) -> Specific 10
 optionalTime :: Integer -> Optional Integer -> Optional NominalDiffTime
 optionalTime a b = fromInteger <$> defaultTo' a b
+
+-- | Extract DrinkSize flavor texts from Common options.
+extractFlavors :: Common -> Seq (Optional Text)
+extractFlavors com =
+  fromList (($ com) <$> [_sipText, _swallowText, _gulpText, _fakeText, _emptyText])
