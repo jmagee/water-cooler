@@ -16,10 +16,11 @@ main = run =<< execParser (parseCommandLine `withInfo` infoStr)
     infoStr = "The water cooler " ++ version
 
 run :: Options -> IO ()
-run (Options (Common at cooler history sipText swallowText gulpText fakeText emptyText)
+run (Options (Common at cooler history sipText swallowText
+                     gulpText fakeText emptyText timeFormat)
              command) = do
   let texts = fromList [sipText, swallowText, gulpText, fakeText, emptyText]
-  env <- overrideEnv cooler history texts =<< getEnvRC
+  env <- overrideEnv cooler history texts timeFormat =<< getEnvRC
   case command of
     DrinkWater size ->
       drinkWater env size (fromInteger <$> at) >>= T.putStrLn
@@ -34,7 +35,7 @@ run (Options (Common at cooler history sipText swallowText gulpText fakeText emp
     LastDrink       ->
       getLastDrink env >>= \case
         Nothing -> putStrLn "None"
-        Just d  -> formatDrink d >>= T.putStrLn 
+        Just d  -> formatDrink env d >>= T.putStrLn
 
     NotThirsty      ->
       drinkWater env (Specific Fake) (optionalTime 600 at) >>= T.putStrLn

@@ -20,6 +20,7 @@ module WaterCooler.Internal
 ) where
 
 import           WaterCooler.Display
+import           WaterCooler.Env
 import           WaterCooler.FromString
 import           WaterCooler.Util
 
@@ -119,8 +120,8 @@ instance FromJSON WaterCooler where
   parseJSON _ = mzero
 
 instance ToJSON WaterCooler where
-  toJSON (WaterCooler lastDrink secondsToNext) =
-    object [ "lastDrink"      .= lastDrink
+  toJSON (WaterCooler lastDrinky secondsToNext) =
+    object [ "lastDrink"      .= lastDrinky
            , "secondsToNext"  .= secondsToNext
            ]
 
@@ -150,9 +151,9 @@ readHistory file = unlessEmpty file [] $ \contents ->
 archiveHistory :: Path Abs File -> Path Abs File -> IO ()
 archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
   Nothing                        -> pure ()
-  Just (WaterCooler lastDrink _) -> do
+  Just (WaterCooler lastDrinky _) -> do
     history <- readHistory histFile
-    seq history $ writeJSON histFile $ lastDrink : history
+    seq history $ writeJSON histFile $ lastDrinky : history
 
 -- | The time of the next drink.
 nextDrink :: WaterCooler -> UTCTime
@@ -163,11 +164,12 @@ lastDrink :: WaterCooler -> Drink
 lastDrink = _lastDrink
 
 -- | Format drink text.
-formatDrink :: Drink -> IO Text
-formatDrink (Drink size time) = do
+formatDrink :: Env -> Drink -> IO Text
+formatDrink env (Drink size time) = do
   zone <- getCurrentTimeZone
   let local = utcToLocalTime zone time
-  pure $ build size (formatTime defaultTimeLocale "%F %T" local)
+  let f = cs $ _timeFormat env
+  pure $ build size (formatTime defaultTimeLocale f local)
     where
       build :: DrinkSize -> String -> Text
       build a b = display a `append` " at " `append` cs b

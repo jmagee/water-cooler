@@ -35,7 +35,7 @@ import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
-drinkWater (Env coolerFile historyFile drinkText) size next = do
+drinkWater (Env coolerFile historyFile drinkText _) size next = do
   let realSize = defaultTo Swallow size
   beverage <- drink realSize
   let cooler = WaterCooler beverage $ defaultTo 1200 next
@@ -45,16 +45,16 @@ drinkWater (Env coolerFile historyFile drinkText) size next = do
 
 -- | Check if it is time for a drink.
 checkDrink :: Env -> IO Bool
-checkDrink (Env cooler _ _) = readWaterCooler cooler >>= \case
+checkDrink (Env cooler _ _ _) = readWaterCooler cooler >>= \case
   Just chill  -> (nextDrink chill <=) <$> now
   Nothing     -> pure True
 
 -- | Check how long until the next drink.
 timeTilNextDrink :: Env -> IO NominalDiffTime
-timeTilNextDrink (Env cooler _ _) = readWaterCooler cooler >>= \case
+timeTilNextDrink (Env cooler _ _ _) = readWaterCooler cooler >>= \case
   Just chill -> diffUTCTime (nextDrink chill) <$> now
   Nothing    -> let n = now in diffUTCTime <$> n <*> n
 
 -- | Get the last drink.
 getLastDrink :: Env -> IO (Maybe Drink)
-getLastDrink (Env cooler _ _) = lastDrink <$$> readWaterCooler cooler
+getLastDrink (Env cooler _ _ _) = lastDrink <$$> readWaterCooler cooler
