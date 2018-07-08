@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a9d88c572917f82b8c95e06e0adf4bc8392523d037169ed05a91c085a13d0f42
+-- hash: 54198f60293705c25e40581c09734ac55678b8abb058a6f1e8c48debc4577823
 
 name:           water-cooler
 version:        0.1.0.0
@@ -69,6 +69,7 @@ executable water-cooler
     , optional-args
     , optparse-applicative
     , text
+    , time
     , water-cooler
   default-language: Haskell2010
 

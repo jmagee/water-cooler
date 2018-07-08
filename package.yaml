@@ -57,6 +57,7 @@ executables:
     - optional-args
     - optparse-applicative
     - text
+    - time
 
 tests:
   water-cooler-test:

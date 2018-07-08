@@ -1,6 +1,7 @@
 -- | Utilities functions.
 module WaterCooler.Util
 ( jbail
+, defaultTo'
 , mkHomePath
 , unlessEmpty
 , slash
@@ -12,6 +13,7 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString, null, readFile,
                                                  writeFile)
+import           Data.Optional            (Optional (..), defaultTo)
 import           Path                     (Abs, File, Path, toFilePath)
 import           System.Directory         (doesFileExist, getHomeDirectory)
 import           System.FilePath.Posix    (pathSeparator)
@@ -41,3 +43,7 @@ jbail f e = error $ "Error parsing JSON file <" ++ toFilePath f ++ ">:" ++ e
 -- | Write a json file.
 writeJSON :: ToJSON a => Path Abs File -> a -> IO ()
 writeJSON file thing = BS.writeFile (toFilePath file) $ encodePretty thing
+
+-- defaultTo that wraps the result back up in an Optional.
+defaultTo' :: a -> Optional a -> Optional a
+defaultTo' x y = Specific $ defaultTo x y

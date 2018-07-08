@@ -27,6 +27,7 @@ data Common = Common
                 (Optional Text)     -- Env drink swallow text
                 (Optional Text)     -- Env drink gulp text
                 (Optional Text)     -- Env drink fake text
+                (Optional Text)     -- Env drink empty text
             deriving (Show)
 
 -- | Commands.
@@ -76,6 +77,10 @@ parseCommon = Common
   <*> optional (strOption $ long "env-fake-text"
                           <> metavar "flavor text"
                           <> help "Message to display after a fake drink"
+                          <> hidden)
+  <*> optional (strOption $ long "env-empty-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display when out of water"
                           <> hidden)
 
 parseCommand :: Parser Command

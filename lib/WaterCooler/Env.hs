@@ -56,6 +56,7 @@ mkEnv' a b c = do
         -- (mergeDrinkFlavors drinkFlavors c)
         (defaultTo defDrink c)
 
+-- FIXME: Should this be moved closer to drinkSize?
 -- | Drink flavor texts
 drinkFlavors :: Seq Text
 drinkFlavors = empty
@@ -63,6 +64,7 @@ drinkFlavors = empty
              |> "The cool water refreshes"
              |> "The cool water invigorates"
              |> "Water is essential"
+             |> "Fetch some more water?"
 
 mergeDrinkFlavors :: Seq Text -> Seq (Optional Text) -> Seq Text
 mergeDrinkFlavors  = S.zipWith choose

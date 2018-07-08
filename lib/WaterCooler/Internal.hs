@@ -47,7 +47,8 @@ magicTimeThreshold = 60
 -- Sip, Swallow, or Gulp- roughly small, medium, or large.
 -- Fake is for a fake drink - for cases when one really doesn't want to have a
 -- drink.
-data DrinkSize = Fake | Sip | Swallow | Gulp
+-- Empty is a drink when you are out of water!
+data DrinkSize = Empty | Fake | Sip | Swallow | Gulp
                deriving (Eq, Read, Show)
 
 instance FromString DrinkSize where
@@ -56,21 +57,24 @@ instance FromString DrinkSize where
     "swallow" -> Just Swallow
     "gulp"    -> Just Gulp
     "fake"    -> Just Fake
+    "empty"   -> Just Empty
     _         -> Nothing
 
 instance Arbitrary DrinkSize where
-  arbitrary = oneof [pure Gulp, pure Swallow, pure Sip]
-  shrink Gulp = [Swallow, Sip, Fake]
-  shrink Swallow = [Sip, Fake]
+  arbitrary = oneof [pure Gulp, pure Swallow, pure Sip, pure Fake, pure Empty]
+  shrink Gulp = [Swallow, Sip, Fake, Empty]
+  shrink Swallow = [Sip, Fake, Empty]
   shrink Sip = [Fake]
-  shrink Fake = []
+  shrink Fake = [Empty]
+  shrink Empty = []
 
 -- | Get a flavor text string corrosponding to the drink size.
 drinkSizeToFlavor :: Seq Text -> DrinkSize -> Text
-drinkSizeToFlavor s Sip = fromMaybe "Undefined" $ S.lookup 0 s
+drinkSizeToFlavor s Sip     = fromMaybe "Undefined" $ S.lookup 0 s
 drinkSizeToFlavor s Swallow = fromMaybe "Undefined" $ S.lookup 1 s
-drinkSizeToFlavor s Gulp = fromMaybe "Undefined" $ S.lookup 2 s
-drinkSizeToFlavor s Fake = fromMaybe "Undefined" $ S.lookup 3 s
+drinkSizeToFlavor s Gulp    = fromMaybe "Undefined" $ S.lookup 2 s
+drinkSizeToFlavor s Fake    = fromMaybe "Undefined" $ S.lookup 3 s
+drinkSizeToFlavor s Empty   = fromMaybe "Undefined" $ S.lookup 4 s
 
 -- | A drink - when and how much.
 data Drink =

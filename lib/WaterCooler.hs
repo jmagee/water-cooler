@@ -53,6 +53,7 @@ timeTilNextDrink (Env cooler _ _) = readWaterCooler cooler >>= \case
   Just chill -> diffUTCTime (nextDrink chill) <$> now
   Nothing    -> let n = now in diffUTCTime <$> n <*> n
 
+-- FIXME: Deprecated, this can be removed.
 -- | Update the time until the next drink.
 updateTimeTilNextDrink :: Env -> NominalDiffTime -> IO Text
 updateTimeTilNextDrink env t = drinkWater env (Specific Fake) (Specific t)
