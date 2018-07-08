@@ -6,6 +6,7 @@ module WaterCooler.Util
 , unlessEmpty
 , slash
 , writeJSON
+, (<$$>)
 ) where
 
 import           Data.Aeson               (ToJSON)
@@ -44,6 +45,10 @@ jbail f e = error $ "Error parsing JSON file <" ++ toFilePath f ++ ">:" ++ e
 writeJSON :: ToJSON a => Path Abs File -> a -> IO ()
 writeJSON file thing = BS.writeFile (toFilePath file) $ encodePretty thing
 
--- defaultTo that wraps the result back up in an Optional.
+-- | defaultTo that wraps the result back up in an Optional.
 defaultTo' :: a -> Optional a -> Optional a
 defaultTo' x y = Specific $ defaultTo x y
+
+-- | Nested functor.
+(<$$>) :: Functor f => Functor f' => (a -> b) -> f (f' a) -> f (f' b)
+(<$$>) = fmap . fmap

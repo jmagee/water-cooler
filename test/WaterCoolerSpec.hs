@@ -108,6 +108,24 @@ spec = do
       let actual   = nextDrink wc
       assert $ diffUTCTime expected actual < magicTimeThreshold
 
+  describe "getLastDrink" $
+    it "is none" $ do
+      pp0 <- Specific <$> getFileName "testFileCooler"
+      pp1 <- Specific <$> getFileName "testFileHistory"
+      real <- mkEnv' pp0 pp1 Default
+      getLastDrink real >>= (`shouldBe` Nothing)
+
+  describe "getLastDrink" $
+    it "is a drink" $ do
+      pp0 <- getFileName "testFileCooler"
+      pp1 <- getFileName "testFileHistory"
+      real <- mkEnv' (Specific pp0) (Specific pp1) Default
+      _ <- drinkWater real (Specific Sip) (Specific 0)
+      d <- drink Sip
+      getLastDrink real >>= (`shouldBe` Just d)
+      removeFile pp0
+      removeFile pp1
+
   describe "readEnvRC and writeEnvRC" $
     it "work" $ do
       cooler  <- getFileName "testFileCooler"

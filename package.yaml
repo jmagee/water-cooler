@@ -38,6 +38,7 @@ library:
     - optional-args
     - path
     - QuickCheck
+    - string-conversions
     - text
     - time
 

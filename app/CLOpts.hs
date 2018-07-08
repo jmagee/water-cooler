@@ -34,6 +34,7 @@ data Common = Common
 data Command = DrinkWater (Optional DrinkSize)
              | Status
              | NextDrink
+             | LastDrink
              | NotThirsty
              | NoWater
              | Mkrc
@@ -88,6 +89,7 @@ parseCommand = subparser
   $  command "drink"        (parseDrink `withInfo`  "Drink water")
   <> command "status"       (pure Status `withInfo` "Check Status")
   <> command "next"         (pure NextDrink `withInfo`   "Check next drink")
+  <> command "last"         (pure LastDrink `withInfo`   "Check last drink")
   <> command "not-thirsty"  (pure NotThirsty `withInfo`  "Not thirsty")
   <> command "no-water"     (pure NoWater `withInfo` "Out of water")
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")

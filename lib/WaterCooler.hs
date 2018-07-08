@@ -4,6 +4,7 @@
 module WaterCooler
 ( drinkWater
 , checkDrink
+, getLastDrink
 , timeTilNextDrink
 
   -- Re-exports.
@@ -11,6 +12,7 @@ module WaterCooler
 , Drink
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
+, formatDrink   -- From WaterCooler.Internal
 , getEnvRC      -- From WaterCooler.Env
 , mkEnv         -- From WaterCooler.Env
 , mkEnv'        -- From WaterCooler.Env
@@ -24,6 +26,7 @@ module WaterCooler
 import           WaterCooler.Env
 import           WaterCooler.FromString
 import           WaterCooler.Internal
+import           WaterCooler.Util
 import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
@@ -51,3 +54,7 @@ timeTilNextDrink :: Env -> IO NominalDiffTime
 timeTilNextDrink (Env cooler _ _) = readWaterCooler cooler >>= \case
   Just chill -> diffUTCTime (nextDrink chill) <$> now
   Nothing    -> let n = now in diffUTCTime <$> n <*> n
+
+-- | Get the last drink.
+getLastDrink :: Env -> IO (Maybe Drink)
+getLastDrink (Env cooler _ _) = lastDrink <$$> readWaterCooler cooler

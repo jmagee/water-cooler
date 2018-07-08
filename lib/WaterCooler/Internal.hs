@@ -9,6 +9,8 @@ module WaterCooler.Internal
 , archiveHistory
 , drink
 , drinkSizeToFlavor
+, formatDrink
+, lastDrink
 , now
 , magicTimeThreshold
 , nextDrink
@@ -17,6 +19,7 @@ module WaterCooler.Internal
 , writeWaterCooler
 ) where
 
+import           WaterCooler.Display
 import           WaterCooler.FromString
 import           WaterCooler.Util
 
@@ -28,10 +31,13 @@ import           Data.Char                 (toLower)
 import           Data.Maybe                (fromMaybe)
 import           Data.Sequence             (Seq)
 import qualified Data.Sequence             as S (lookup)
-import           Data.Text                 (Text)
+import           Data.String.Conversions   (cs)
+import           Data.Text                 (Text, append)
 import           Data.Time                 (NominalDiffTime, UTCTime,
                                             addUTCTime, diffUTCTime)
 import           Data.Time.Clock           (getCurrentTime)
+import           Data.Time.Format          (defaultTimeLocale, formatTime)
+import           Data.Time.LocalTime       (getCurrentTimeZone, utcToLocalTime)
 import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
@@ -67,6 +73,8 @@ instance Arbitrary DrinkSize where
   shrink Sip = [Fake]
   shrink Fake = [Empty]
   shrink Empty = []
+
+instance Display DrinkSize
 
 -- | Get a flavor text string corrosponding to the drink size.
 drinkSizeToFlavor :: Seq Text -> DrinkSize -> Text
@@ -146,6 +154,20 @@ archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
     history <- readHistory histFile
     seq history $ writeJSON histFile $ lastDrink : history
 
--- | The time of the next drink
+-- | The time of the next drink.
 nextDrink :: WaterCooler -> UTCTime
 nextDrink (WaterCooler (Drink _ lastd) next) = addUTCTime next lastd
+
+-- | Get the last drink from the cooler.
+lastDrink :: WaterCooler -> Drink
+lastDrink = _lastDrink
+
+-- | Format drink text.
+formatDrink :: Drink -> IO Text
+formatDrink (Drink size time) = do
+  zone <- getCurrentTimeZone
+  let local = utcToLocalTime zone time
+  pure $ build size (formatTime defaultTimeLocale "%F %T" local)
+    where
+      build :: DrinkSize -> String -> Text
+      build a b = display a `append` " at " `append` cs b

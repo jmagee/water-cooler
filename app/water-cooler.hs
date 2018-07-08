@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Main where
 
 import           CLOpts
@@ -29,6 +30,11 @@ run (Options (Common at cooler history sipText swallowText gulpText fakeText emp
     NextDrink       ->
       timeTilNextDrink env >>= \seconds ->
         putStrLn $ "Next drink in: " ++ show seconds
+
+    LastDrink       ->
+      getLastDrink env >>= \case
+        Nothing -> putStrLn "None"
+        Just d  -> formatDrink d >>= T.putStrLn 
 
     NotThirsty      ->
       drinkWater env (Specific Fake) (optionalTime 600 at) >>= T.putStrLn
