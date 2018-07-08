@@ -42,6 +42,10 @@ path1S :: FilePath
 path1S = toFilePath path1
 path2S :: FilePath
 path2S = toFilePath path2
+path3S :: FilePath
+path3S = toFilePath path3
+path4S :: FilePath
+path4S = toFilePath path4
 
 getCWD :: IO (Path Abs Dir)
 getCWD = getCurrentDirectory >>= parseAbsDir
@@ -118,7 +122,7 @@ spec = do
   describe "overrideEnv" $
     it "overrides one" $ do
       startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "bar"
-      overrideEnv (Specific "/abs/override")
+      overrideEnv (Specific path3S)
                   Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env path3
@@ -130,8 +134,8 @@ spec = do
   describe "overrideEnv" $
     it "overrides all" $ do
       startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "snoo"
-      overrideEnv (Specific "/abs/override")
-                  (Specific "/abs/override2")
+      overrideEnv (Specific path3S)
+                  (Specific path4S)
                   ((singleton . Specific) "bar")
                   (Specific "%F")
                   (Specific "boo")
