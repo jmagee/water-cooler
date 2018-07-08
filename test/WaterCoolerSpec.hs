@@ -142,26 +142,12 @@ spec = do
       timeTilNextb `shouldSatisfy` \x -> x >= -1 && x <= 1
 
       -- Drank, using the default next drink timing.
-      flavorTextc  <-drinkWater env Default Default
+      flavorTextc  <- drinkWater env Default Default
       flavorTextc `shouldBe` "The cool water refreshes"
       shouldDrinkc <- checkDrink env
       shouldDrinkc `shouldBe` False
       timeTilNextc <- timeTilNextDrink env
       timeTilNextc `shouldSatisfy` \x -> x >= 1190 && x <= 1210
-
-      -- Manually set the next drink time
-      updateTimeTilNextDrink env 0
-      shouldDrinkd <- checkDrink env
-      shouldDrinkd `shouldBe` True
-      timeTilNextd <- timeTilNextDrink env
-      timeTilNextd `shouldSatisfy` \x -> x >= -1 && x <= 1
-
-      -- Manually set the next drink time
-      updateTimeTilNextDrink env 42
-      shouldDrinke <- checkDrink env
-      shouldDrinke `shouldBe` False
-      timeTilNexte <- timeTilNextDrink env
-      timeTilNexte `shouldSatisfy` \x -> x >= -41 && x <= 43
 
       -- FIXME: Do more testing here
       removeFile cooler
