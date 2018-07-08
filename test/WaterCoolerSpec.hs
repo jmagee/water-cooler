@@ -1,6 +1,7 @@
 -- WaterCooler test specification.
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module WaterCoolerSpec ( spec ) where
 
@@ -9,17 +10,34 @@ import           WaterCooler.Env
 import           WaterCooler.Internal
 import           WaterCooler.Util
 
-import           Control.Monad             (liftM2)
-import           Data.Time                 (addUTCTime, diffUTCTime)
-import           Path                      (Abs, Dir, Path, mkAbsFile,
-                                            parseAbsDir, parseRelFile, parseAbsFile,
-                                            toFilePath, (</>))
-import           System.Directory          (doesFileExist, getCurrentDirectory,
-                                            removeFile)
+import           Control.Monad           (liftM2)
+import           Data.Sequence           (singleton)
+import           Data.Time               (addUTCTime, diffUTCTime)
+import           Path                    (Abs, Dir, File, Path, absfile,
+                                          parseAbsDir, parseAbsFile,
+                                          parseRelFile, toFilePath, (</>))
+import           System.Directory        (doesFileExist, getCurrentDirectory,
+                                          removeFile)
 import           Test.Hspec
-import           Test.Hspec.QuickCheck     (prop)
-import           Test.QuickCheck.Monadic   (assert, monadicIO, run)
-import Data.Sequence (singleton)
+import           Test.Hspec.QuickCheck   (prop)
+import           Test.QuickCheck.Monadic (assert, monadicIO, run)
+
+path1 :: Path Abs File
+path2 :: Path Abs File
+path3 :: Path Abs File
+path4 :: Path Abs File
+#ifdef ming32_HOST_OS
+path1 = [absfile|C:\abs\path|]
+path2 = [absfile|C:\also\abs\path|]
+path3 = [absfile|C:\abs\override|]
+path4 = [absfile|C:\abs\override2|]
+#else
+path1 = [absfile|/abs/path|]
+path2 = [absfile|/also/abs/path|]
+path3 = [absfile|/abs/override|]
+path4 = [absfile|/abs/override2|]
+#endif
+
 
 getCWD :: IO (Path Abs Dir)
 getCWD = getCurrentDirectory >>= parseAbsDir
@@ -41,8 +59,8 @@ spec = do
     it "creates an environment" $
       mkEnv "/abs/path" "/also/abs/path" (singleton "nice")  "%T" "oh my" >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/path")
-              $(mkAbsFile "/also/abs/path")
+          Env path1
+              path2
               (singleton "nice")
               "%T"
               "oh my")
@@ -55,8 +73,8 @@ spec = do
              (Specific "%F")
              (Specific "foo") >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/path")
-              $(mkAbsFile "/also/abs/path")
+          Env path1
+              path2
               (singleton "nice")
               "%F"
               "foo")
@@ -66,7 +84,7 @@ spec = do
       pp <- mkHomePath ".water-cooler-history" >>= parseAbsFile
       mkEnv' (Specific "/abs/path") Default Default Default Default >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/path") pp drinkFlavors "%F %T" "You're thirsty")
+          Env path1 pp drinkFlavors "%F %T" "You're thirsty")
 
   describe "mkEnv'" $
     it "create an environment with all defaults " $ do
@@ -87,8 +105,8 @@ spec = do
       startEnv <- mkEnv "/abs/path" "/also/abs/path" (singleton "foo") "%F" "bar"
       overrideEnv Default Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/path")
-              $(mkAbsFile "/also/abs/path")
+          Env path1
+              path2
               (singleton "foo")
               "%F"
               "bar")
@@ -99,8 +117,8 @@ spec = do
       overrideEnv (Specific "/abs/override")
                   Default (singleton Default) Default Default startEnv >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/override")
-              $(mkAbsFile "/also/abs/path")
+          Env path3
+              path2
               (singleton "foo")
               "%T"
               "bar")
@@ -115,8 +133,8 @@ spec = do
                   (Specific "boo")
                   startEnv >>=
         (`shouldBe`
-          Env $(mkAbsFile "/abs/override")
-              $(mkAbsFile "/abs/override2")
+          Env path3
+              path4
               (singleton "bar")
               "%F"
               "boo")
