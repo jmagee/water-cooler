@@ -14,6 +14,7 @@ import           WaterCooler
 
 import           Data.Optional             (Optional (..))
 import           Data.Semigroup            ((<>))
+import           Data.Text                 (Text)
 import           Options.Applicative       hiding (optional)
 import           Options.Applicative.Types (readerAsk)
 
@@ -22,6 +23,10 @@ data Common = Common
                 (Optional Integer)  -- seconds until next drink
                 (Optional FilePath) -- Env cooler location
                 (Optional FilePath) -- Env history location
+                (Optional Text)     -- Env drink sip text
+                (Optional Text)     -- Env drink swallow text
+                (Optional Text)     -- Env drink gulp text
+                (Optional Text)     -- Env drink fake text
             deriving (Show)
 
 -- | Commands.
@@ -50,10 +55,28 @@ parseCommon = Common
                             <> help "Set time to next drink")
   <*> optional (strOption $ long "env-cooler"
                           <> metavar "path"
-                          <> help "Absolute path of cooler file")
+                          <> help "Absolute path of cooler file"
+                          <> hidden)
   <*> optional (strOption $ long "env-history"
                           <> metavar "path"
-                          <> help "Absolute path of history file")
+                          <> help "Absolute path of history file"
+                          <> hidden)
+  <*> optional (strOption $ long "env-sip-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display after sipping"
+                          <> hidden)
+  <*> optional (strOption $ long "env-swallow-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display after swallowing"
+                          <> hidden)
+  <*> optional (strOption $ long "env-gulp-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display after gulping"
+                          <> hidden)
+  <*> optional (strOption $ long "env-fake-text"
+                          <> metavar "flavor text"
+                          <> help "Message to display after a fake drink"
+                          <> hidden)
 
 parseCommand :: Parser Command
 parseCommand = subparser

@@ -8,6 +8,7 @@ module WaterCooler.Internal
 , WaterCooler (..)
 , archiveHistory
 , drink
+, drinkSizeToFlavor
 , now
 , magicTimeThreshold
 , nextDrink
@@ -30,6 +31,9 @@ import           Data.Time.Clock           (getCurrentTime)
 import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
+import Data.Sequence (Seq)
+import qualified Data.Sequence as S (lookup)
+import Data.Text (Text)
 
 -- | Magic time threshold.
 -- This threshold is used when comparing times.  Two times with a difference
@@ -59,6 +63,13 @@ instance Arbitrary DrinkSize where
   shrink Swallow = [Sip, Fake]
   shrink Sip = [Fake]
   shrink Fake = []
+
+-- | Get a flavor text string corrosponding to the drink size.
+drinkSizeToFlavor :: Seq Text -> DrinkSize -> Text
+drinkSizeToFlavor s Sip = maybe "Undefined" id $ S.lookup 0 s
+drinkSizeToFlavor s Swallow = maybe "Undefined" id $ S.lookup 1 s
+drinkSizeToFlavor s Gulp = maybe "Undefined" id $ S.lookup 2 s
+drinkSizeToFlavor s Fake = maybe "Undefined" id $ S.lookup 3 s
 
 -- | A drink - when and how much.
 data Drink =

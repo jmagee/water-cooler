@@ -30,6 +30,7 @@ library:
     - aeson
     - aeson-pretty
     - bytestring
+    - containers
     - directory
     - exceptions
     - filepath
@@ -37,6 +38,7 @@ library:
     - optional-args
     - path
     - QuickCheck
+    - text
     - time
 
 executables:
@@ -50,9 +52,11 @@ executables:
     - -Wall
     dependencies:
     - water-cooler
+    - containers
     - directory
     - optional-args
     - optparse-applicative
+    - text
 
 tests:
   water-cooler-test:
@@ -65,6 +69,7 @@ tests:
     - -Wall
     dependencies:
     - water-cooler
+    - containers
     - directory
     - hspec
     - path

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ea07a4f3b50e291374b213330e57e0806e21982998d59f73b70ebdf8a8580f06
+-- hash: a9d88c572917f82b8c95e06e0adf4bc8392523d037169ed05a91c085a13d0f42
 
 name:           water-cooler
 version:        0.1.0.0
@@ -43,12 +43,14 @@ library
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , exceptions
     , filepath
     , gitrev
     , optional-args
     , path
+    , text
     , time
   default-language: Haskell2010
 
@@ -62,9 +64,11 @@ executable water-cooler
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       base >=4.7 && <5
+    , containers
     , directory
     , optional-args
     , optparse-applicative
+    , text
     , water-cooler
   default-language: Haskell2010
 
@@ -80,6 +84,7 @@ test-suite water-cooler-test
   build-depends:
       QuickCheck
     , base >=4.7 && <5
+    , containers
     , directory
     , hspec
     , path
