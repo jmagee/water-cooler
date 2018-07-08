@@ -88,7 +88,9 @@ parseCommand = subparser
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")
 
 parseDrink :: Parser Command
-parseDrink = DrinkWater <$> optional (argument parseDrinkSize (metavar "Drink-Size"))
+parseDrink = DrinkWater
+  <$> optional (argument parseDrinkSize $ 
+    (metavar "Drink-Size") <> completeWith ["sip", "swallow", "gulp"])
 
 parseDrinkSize :: ReadM DrinkSize
 parseDrinkSize = parseCustom "Drink-Size must be 'sip', 'swallow', or 'gulp'."
