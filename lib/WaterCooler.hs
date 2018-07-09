@@ -46,7 +46,7 @@ drinkWater (Env coolerFile historyFile drinkText _ _) size next = do
   beverage <- drink realSize
   let cooler = WaterCooler beverage $ defaultTo 1200 next
   writeWaterCooler coolerFile cooler
-  archiveHistory coolerFile historyFile-- fixme: archiveHistory should use cooler directly, rather than reading it
+  archiveHistory cooler historyFile
   pure $ drinkSizeToFlavor drinkText realSize
 
 -- | Check if it is time for a drink.

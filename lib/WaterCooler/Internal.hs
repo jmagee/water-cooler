@@ -148,12 +148,10 @@ readHistory file = unlessEmpty file [] $ \contents ->
   either (jbail file) id (eitherDecode contents :: Either String [Drink])
 
 -- | Archive the water cooler history.
-archiveHistory :: Path Abs File -> Path Abs File -> IO ()
-archiveHistory coolFile histFile = readWaterCooler coolFile >>= \case
-  Nothing                        -> pure ()
-  Just (WaterCooler lastDrinky _) -> do
-    history <- readHistory histFile
-    seq history $ writeJSON histFile $ lastDrinky : history
+archiveHistory :: WaterCooler -> Path Abs File -> IO ()
+archiveHistory (WaterCooler lastDrinky _) histFile = do
+  history <- readHistory histFile
+  seq history $ writeJSON histFile $ lastDrinky : history
 
 -- | The time of the next drink.
 nextDrink :: WaterCooler -> UTCTime
