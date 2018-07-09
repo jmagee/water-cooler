@@ -26,7 +26,7 @@ import           WaterCooler.Util
 
 import           Control.Monad             (mzero)
 import           Data.Aeson                (FromJSON, ToJSON, Value (..),
-                                            eitherDecode, object, parseJSON,
+                                            eitherDecode', object, parseJSON,
                                             toJSON, (.:), (.=))
 import           Data.Char                 (toLower)
 import           Data.Maybe                (fromMaybe)
@@ -140,18 +140,15 @@ writeWaterCooler = writeJSON
 -- | Read the water cooler file.
 readWaterCooler :: Path Abs File -> IO (Maybe WaterCooler)
 readWaterCooler file = unlessEmpty file Nothing $ \contents ->
-  either (jbail file) Just (eitherDecode contents :: Either String WaterCooler)
+  either (jbail file) Just (eitherDecode' contents :: Either String WaterCooler)
 
 -- | Read history.
 readHistory :: Path Abs File -> IO [Drink]
 readHistory file = unlessEmpty file [] $ \contents ->
-  either (jbail file) id (eitherDecode contents :: Either String [Drink])
+  either (jbail file) id (eitherDecode' contents :: Either String [Drink])
 
 -- | Archive the water cooler history.
 archiveHistory :: WaterCooler -> Path Abs File -> IO ()
-{-archiveHistory (WaterCooler lastDrinky _) histFile = do-}
-  {-history <- readHistory histFile-}
-  {-seq history $ writeJSON histFile $ lastDrinky : history-}
 archiveHistory (WaterCooler lastDrinky _) histFile = do
   history <- readHistory histFile
   seq history $ writeJSON histFile $ lastDrinky : history
