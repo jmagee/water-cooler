@@ -149,6 +149,9 @@ readHistory file = unlessEmpty file [] $ \contents ->
 
 -- | Archive the water cooler history.
 archiveHistory :: WaterCooler -> Path Abs File -> IO ()
+{-archiveHistory (WaterCooler lastDrinky _) histFile = do-}
+  {-history <- readHistory histFile-}
+  {-seq history $ writeJSON histFile $ lastDrinky : history-}
 archiveHistory (WaterCooler lastDrinky _) histFile = do
   history <- readHistory histFile
   seq history $ writeJSON histFile $ lastDrinky : history
