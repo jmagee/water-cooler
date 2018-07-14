@@ -86,8 +86,8 @@ until the next drink reminder.
 Options
 =======
 
-|                              |                    |
-+------------------------------+--------------------+
+| Option                       | Purpose            |
+|------------------------------|--------------------|
 |`--help`                      | Display help       |
 |`--version`                   | Display version    |
 | `--wait N`                   | Set a custom value for the number of seconds for the next drink.  Effects only `drink`, `not-thirsty`, and `no-water` commands. |
@@ -99,7 +99,7 @@ Options
 |`--env-fake-text` text        | Specify a message to display when skipping a drink. |
 |`--env-empty-text` text       | Specify a message to display when out of water. |
 |`--env-thirsty-text` text     | Specify a message to display when thirsty. |
-|`--env-timeformat` format-text| Specify theh Unix-style date/time format string. |
+|`--env-timeformat` format-text| Specify the Unix-style date/time format string. |
 
 Shell usage
 ===========
