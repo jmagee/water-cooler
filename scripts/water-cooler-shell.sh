@@ -26,3 +26,7 @@ out_of_water() {
 next_drink() {
   water-cooler next
 }
+
+last_drink() {
+  water-cooler last
+}
