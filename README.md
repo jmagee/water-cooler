@@ -42,7 +42,7 @@ Drink some water
 Drink size can be one of:
 
 * `sip` - A small drink
-* `swallow` - An average size drink
+* `swallow` - An average size drink (default)
 * `gulp` - A big drink
 * `fake` - You didn't really drink, but you want to lie to the program that you did.
 
@@ -99,14 +99,14 @@ Options
 |`--env-fake-text` text        | Specify a message to display when skipping a drink. |
 |`--env-empty-text` text       | Specify a message to display when out of water. |
 |`--env-thirsty-text` text     | Specify a message to display when thirsty. |
-|`--env-timeformat` format-text| Specify the Unix-style date/time format string. |
+|`--env-timeformat` format-text| Specify a Unix-style date/time format string. |
 
 Shell usage
 ===========
 Embedding `water-cooler` within a shell prompt can be achieved via a
 command such as `$(water-cooler status)`.  For convenience, a shell script is
 provided in the [scripts](scripts) directory which implements an interface
-similar to that provided by thirst.sh.  Simple source
+similar to that provided by thirsty.sh.  Simple source
 `scripts/water-cooler-script.sh` to make use of these shell functions.
 
 Shell completion
@@ -137,9 +137,9 @@ This could be achieved via command line options:
 
 `water-cooler drink sip --env-sip-text "That's not enough"`
 
-`water-cooler swallow sip --env-swallow-text "Way to go"`
+`water-cooler drink swallow --env-swallow-text "Way to go"`
 
-`water-cooler gulp sip --env-swallow-text "Way to go"`
+`water-cooler drink gulp --env-gulp-text "Way to go"`
 
 Alternatively, the preferred default can be saved in a RC file of the form:
 `$HOME/.water-cooler.rc`
