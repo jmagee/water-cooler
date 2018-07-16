@@ -7,16 +7,23 @@ module WaterCooler.Util
 , slash
 , writeJSON
 , (<$$>)
+
+-- Utilities for Testing
+, getCWD
+, getTestFileName
 ) where
 
+import           Control.Monad            (liftM2)
 import           Data.Aeson               (ToJSON)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString, null, readFile,
                                                  writeFile)
 import           Data.Optional            (Optional (..), defaultTo)
-import           Path                     (Abs, File, Path, toFilePath)
-import           System.Directory         (doesFileExist, getHomeDirectory)
+import           Path                     (Abs, Dir, File, Path, parseAbsDir,
+                                           parseRelFile, toFilePath, (</>))
+import           System.Directory         (doesFileExist, getCurrentDirectory,
+                                           getHomeDirectory)
 import           System.FilePath.Posix    (pathSeparator)
 
 -- | Read the file, unless it is empty, in which case return a default value
@@ -52,3 +59,19 @@ defaultTo' x y = Specific $ defaultTo x y
 -- | Nested functor.
 (<$$>) :: Functor f => Functor f' => (a -> b) -> f (f' a) -> f (f' b)
 (<$$>) = fmap . fmap
+
+-- | Get the current working directory.  Used for testing.
+getCWD :: IO (Path Abs Dir)
+getCWD = getCurrentDirectory >>= parseAbsDir
+
+-- | Get the absolute name of a file to be used for testing.
+-- This throws an error if the test file exists.
+getTestFileName :: String -> IO FilePath
+getTestFileName s = do
+  f <- getFileName' s
+  e <- doesFileExist $ toFilePath f
+  if e
+    then error $ "Test file exists, please manually remove: " ++ toFilePath f
+    else pure $ toFilePath f
+  where
+    getFileName' = liftM2 (</>) getCWD . parseRelFile

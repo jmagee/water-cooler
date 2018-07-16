@@ -10,14 +10,11 @@ import           WaterCooler.Env
 import           WaterCooler.Internal
 import           WaterCooler.Util
 
-import           Control.Monad           (liftM2)
 import           Data.Sequence           (singleton)
 import           Data.Time               (addUTCTime, diffUTCTime)
-import           Path                    (Abs, Dir, File, Path, absfile,
-                                          parseAbsDir, parseAbsFile,
-                                          parseRelFile, toFilePath, (</>))
-import           System.Directory        (doesFileExist, getCurrentDirectory,
-                                          removeFile)
+import           Path                    (Abs, File, Path, absfile,
+                                          parseAbsFile, toFilePath)
+import           System.Directory        (removeFile)
 import           Test.Hspec
 import           Test.Hspec.QuickCheck   (prop)
 import           Test.QuickCheck.Monadic (assert, monadicIO, run)
@@ -46,19 +43,6 @@ path3S :: FilePath
 path3S = toFilePath path3
 path4S :: FilePath
 path4S = toFilePath path4
-
-getCWD :: IO (Path Abs Dir)
-getCWD = getCurrentDirectory >>= parseAbsDir
-
-getFileName :: String -> IO FilePath
-getFileName s = do
-  f <- getFileName' s
-  e <- doesFileExist $ toFilePath f
-  if e
-    then error $ "Test file exists, please manually remove: " ++ toFilePath f
-    else pure $ toFilePath f
-  where
-    getFileName' = liftM2 (</>) getCWD . parseRelFile
 
 spec :: Spec
 spec = do
@@ -170,38 +154,31 @@ spec = do
 
   describe "getLastDrink" $
     it "is none" $ do
-      pp0 <- Specific <$> getFileName "testFileCooler"
-      pp1 <- Specific <$> getFileName "testFileHistory"
+      -- We don't use withTestEnv here as these files don't actually get created,
+      -- and therefore cannot be removed.
+      pp0 <- Specific <$> getTestFileName "testFileCooler"
+      pp1 <- Specific <$> getTestFileName "testFileHistory"
       real <- mkEnv' pp0 pp1 Default Default Default
       getLastDrink real >>= (`shouldBe` Nothing)
 
   describe "getLastDrink" $
-    it "is a drink" $ do
-      pp0 <- getFileName "testFileCooler"
-      pp1 <- getFileName "testFileHistory"
-      real <- mkEnv' (Specific pp0) (Specific pp1) Default Default Default
-      _ <- drinkWater real (Specific Sip) (Specific 0)
+    it "is a drink" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWater env (Specific Sip) (Specific 0)
       d <- drink Sip
-      getLastDrink real >>= (`shouldBe` Just d)
-      removeFile pp0
-      removeFile pp1
+      getLastDrink env >>= (`shouldBe` Just d)
 
   describe "readEnvRC and writeEnvRC" $
     it "work" $ do
-      cooler  <- getFileName "testFileCooler"
-      history <- getFileName "testFileHistory"
-      rc      <- getFileName "testRC" >>= parseAbsFile
+      cooler  <- getTestFileName "testFileCooler"
+      history <- getTestFileName "testFileHistory"
+      rc      <- getTestFileName "testRC" >>= parseAbsFile
       env     <- mkEnv cooler history (singleton "flavor text") "%F" "thirsty"
       writeEnvRC rc env
       readEnvRC rc >>= (`shouldBe` env)
       removeFile (toFilePath rc)
 
   describe "drinkWater" $
-    it "everyday" $ do
-      cooler  <- getFileName "testFileCooler"
-      history <- getFileName "testFileHistory"
-      env     <- mkEnv cooler history drinkFlavors "%F" "thirsty"
-
+    it "everyday" $ withTestEnv "test" $ \env -> do
       -- FIXME: Split these out into multiple tests, otherwise it is hard
       -- to tell which one actually failed.
 
@@ -228,5 +205,3 @@ spec = do
       timeTilNextc `shouldSatisfy` \x -> x >= 1190 && x <= 1210
 
       -- FIXME: Do more testing here
-      removeFile cooler
-      removeFile history

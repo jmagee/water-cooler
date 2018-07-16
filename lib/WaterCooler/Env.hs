@@ -19,6 +19,9 @@ module WaterCooler.Env
 , putEnvRC
 , toFake
 , writeEnvRC
+
+-- Only for testing.
+, withTestEnv
 ) where
 
 import           WaterCooler.Util
@@ -33,6 +36,7 @@ import           Data.Sequence       (Seq, empty, (|>))
 import qualified Data.Sequence       as S (zipWith)
 import           Data.Text           (Text)
 import           Path                (Abs, File, Path, parseAbsFile, toFilePath)
+import           System.Directory    (removeFile)
 
 data Env = Env { _cooler      :: Path Abs File
                , _history     :: Path Abs File
@@ -188,3 +192,18 @@ envGetTimeFormat = _timeFormat
 -- | Get the thirsty text from the environment.
 envGetThirstyText :: Env -> Text
 envGetThirstyText = _thirstyText
+
+-- | Run an action within a test environment.
+-- The name of the test environment is specified as a string (e.g. "bench" or
+-- "test", and simply controls the prefix of the filename used.
+withTestEnv :: String -> (Env -> IO a) -> IO a
+withTestEnv name f = do
+  cooler  <- getTestFileName $ name ++ "FileCooler"
+  history <- getTestFileName $ name ++ "nameFileHistory"
+  env     <- mkEnv' (Specific cooler) (Specific history) Default Default Default
+
+  result <- f env
+
+  removeFile cooler
+  removeFile history
+  pure result
