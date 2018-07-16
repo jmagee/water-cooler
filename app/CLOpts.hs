@@ -50,7 +50,8 @@ parseCommandLine = vers *> (Options <$> parseCommon <*> parseCommand)
   where
     vers = infoOption version (  long "version"
                               <> short 'v'
-                              <> help "Display version")
+                              <> help "Display version"
+                              <> hidden)
 
 parseCommon :: Parser Common
 parseCommon = Common
