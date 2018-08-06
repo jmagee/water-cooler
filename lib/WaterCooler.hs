@@ -4,6 +4,7 @@
 module WaterCooler
 ( drinkWater
 , checkDrink
+, getHistory
 , getLastDrink
 , timeTilNextDrink
 
@@ -37,7 +38,7 @@ import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Text              (Text)
-import           Data.Time              (NominalDiffTime, diffUTCTime)
+import           Data.Time              (NominalDiffTime, UTCTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
@@ -68,3 +69,12 @@ getLastDrink env = lastDrink <$$> getCooler env
 -- | Help to read water cooler from the environment.
 getCooler :: Env -> IO (Maybe WaterCooler)
 getCooler = readWaterCooler . envGetCooler
+
+-- | Get history
+-- FIXME: Make Seq instead of list?
+getHistory :: Env -> Optional UTCTime -> IO [Drink]
+getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
+ where
+   filterTime (Specific t) = filter (compDrinkByTime t)
+   filterTime Default      = id
+   compDrinkByTime t a = _when a > t

@@ -1,15 +1,17 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import           CLOpts
 import           WaterCooler
 import           WaterCooler.Util
 
-import           Data.Bool        (bool)
-import           Data.Sequence    (Seq, fromList)
-import           Data.Text        (Text)
-import qualified Data.Text.IO     as T (putStrLn)
-import           Data.Time        (NominalDiffTime)
+import           Control.Monad (mapM_)
+import           Data.Bool     (bool)
+import           Data.Sequence (Seq, fromList)
+import           Data.Text     (Text)
+import qualified Data.Text.IO  as T (putStrLn)
+import           Data.Time     (NominalDiffTime)
 
 main :: IO ()
 main = run =<< execParser (parseCommandLine `withInfo` infoStr)
@@ -48,6 +50,11 @@ dispatchCommand env NoWater wait =
 
 dispatchCommand env Mkrc _ =
   (\f -> putStrLn $ "Wrote " ++ f) =<< putEnvRC env
+
+dispatchCommand env History _ =
+  getHistory env Default >>= mapM_ formatAndPrint
+  where
+    formatAndPrint x = formatDrink env x >>= T.putStrLn
 
 -- | Select between a default Integer and an optional Integer and wrap the back
 -- up as a Specific NominalDiffTime.

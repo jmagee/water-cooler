@@ -40,6 +40,7 @@ data Command = DrinkWater (Optional DrinkSize)
              | NotThirsty
              | NoWater
              | Mkrc
+             | History
              deriving (Show)
 
 data Options = Options Common Command deriving (Show)
@@ -104,6 +105,7 @@ parseCommand = subparser
   <> command "not-thirsty"  (pure NotThirsty `withInfo`  "Not thirsty")
   <> command "no-water"     (pure NoWater `withInfo` "Out of water")
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")
+  <> command "history"         (pure History `withInfo` "Recall drink history")
 
 parseDrink :: Parser Command
 parseDrink = DrinkWater <$> optional (argument parseDrinkSize $
