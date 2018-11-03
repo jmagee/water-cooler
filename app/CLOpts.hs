@@ -105,7 +105,7 @@ parseCommand = subparser
   <> command "not-thirsty"  (pure NotThirsty `withInfo`  "Not thirsty")
   <> command "no-water"     (pure NoWater `withInfo` "Out of water")
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")
-  <> command "history"         (pure History `withInfo` "Recall drink history")
+  <> command "history"      (pure History `withInfo` "Recall drink history")
 
 parseDrink :: Parser Command
 parseDrink = DrinkWater <$> optional (argument parseDrinkSize $
