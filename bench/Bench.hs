@@ -1,7 +1,9 @@
 module Main where
 
-import           Criterion.Main   (bgroup, defaultMain)
+import           Criterion.Main   (defaultMain)
 import           WaterCoolerBench
 
 main :: IO ()
-main = defaultMain [ bgroup "WaterCooler" benchmarks ]
+main = defaultMain [ benchmarks
+                   , benchmarksHistory
+                   ]

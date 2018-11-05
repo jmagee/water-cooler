@@ -21,11 +21,14 @@ module WaterCooler.Env
 , writeEnvRC
 
 -- Only for testing.
+, createTestEnv
+, destroyTestEnv
 , withTestEnv
 ) where
 
 import           WaterCooler.Util
 
+import           Control.DeepSeq     (NFData, rnf)
 import           Control.Monad       (join, mzero)
 import           Control.Monad.Catch (MonadThrow)
 import           Data.Aeson          (FromJSON, ToJSON, Value (..),
@@ -44,6 +47,9 @@ data Env = Env { _cooler      :: Path Abs File
                , _timeFormat  :: Text
                , _thirstyText :: Text
                } deriving (Eq, Show)
+
+instance NFData Env where
+  rnf (Env a b c d e) = a `seq` b `seq` c `seq` d `seq` e `seq` ()
 
 -- | Create an Env.
 mkEnv :: MonadThrow m
@@ -207,3 +213,17 @@ withTestEnv name f = do
   removeFile cooler
   removeFile history
   pure result
+
+-- | Create a testing environment.
+createTestEnv :: String -> IO Env
+createTestEnv name = do
+  cooler  <- getTestFileName $ name ++ "FileCooler"
+  history <- getTestFileName $ name ++ "nameFileHistory"
+  mkEnv' (Specific cooler) (Specific history) Default Default Default
+
+
+-- | Destroy a testing environment.
+destroyTestEnv :: Env -> IO ()
+destroyTestEnv env = do
+  removeFile $ toFilePath $ envGetCooler env
+  removeFile $ toFilePath $ envGetHistory env

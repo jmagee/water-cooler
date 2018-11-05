@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7356c50172677f8c184d12b6a8d2e2a7fe4d183d7177fb9157998cf1abe77ee7
+-- hash: 7c2b1b9e989d49a9fb105feffb58773b4cc675953a3f7bdc813d2ea67c82c52a
 
 name:           water-cooler
 version:        0.1.0.0
@@ -45,6 +45,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , deepseq
     , directory
     , exceptions
     , filepath
