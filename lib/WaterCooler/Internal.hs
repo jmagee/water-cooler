@@ -24,6 +24,7 @@ import           WaterCooler.Env
 import           WaterCooler.FromString
 import           WaterCooler.Util
 
+import           Control.DeepSeq           (NFData, rnf)
 import           Control.Monad             (mzero)
 import           Data.Aeson                (FromJSON, ToJSON, Value (..),
                                             eitherDecode', object, parseJSON,
@@ -56,7 +57,7 @@ magicTimeThreshold = 60
 -- drink.
 -- Empty is a drink when you are out of water!
 data DrinkSize = Empty | Fake | Sip | Swallow | Gulp
-               deriving (Eq, Read, Show)
+               deriving (Eq, Read, Ord, Show)
 
 instance FromString DrinkSize where
   fromString s = case toLower <$> s of
@@ -89,7 +90,10 @@ drinkSizeToFlavor s Empty   = fromMaybe "Undefined" $ S.lookup 4 s
 data Drink =
   Drink { _howMuch :: DrinkSize
         , _when    :: UTCTime
-        } deriving (Show)
+        } deriving (Ord, Show)
+
+instance NFData Drink where
+  rnf (Drink size when) = size `seq` when `seq` ()
 
 instance Eq Drink where
   (Drink a b) == (Drink c d) = (a == c) && (diffUTCTime b d <= magicTimeThreshold)

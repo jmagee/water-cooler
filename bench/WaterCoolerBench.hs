@@ -4,10 +4,15 @@ module WaterCoolerBench (benchmarks, benchmarksHistory) where
 
 import           WaterCooler
 import           WaterCooler.Env
+import           WaterCooler.Internal
 
-import           Control.Monad   (replicateM_)
-import           Criterion.Main  (Benchmark, bench, bgroup, envWithCleanup, nf,
-                                  nfIO)
+import           Control.Monad             (replicateM, replicateM_)
+import           Criterion.Main            (Benchmark, bench, bgroup,
+                                            envWithCleanup, nf, nfIO)
+import           Data.List                 (foldl', sort)
+import           Data.Text                 (Text)
+import           Test.QuickCheck.Arbitrary (arbitrary)
+import           Test.QuickCheck.Gen       (generate)
 
 benchmarks :: Benchmark
 benchmarks = bgroup "WaterCooler"
@@ -28,23 +33,32 @@ benchmarks = bgroup "WaterCooler"
 
 benchmarksHistory :: Benchmark
 benchmarksHistory = envWithCleanup createAndPopulate destroyTestEnv $ \e ->
-  bgroup "WaterCoolerHistory" [ bench "history 5000" (nfIO $ historyALot e 5000) ]
+  bgroup "WaterCoolerHistory" [ bench "history 200" (nfIO $ historyALot e 200)
+                              , bench "historySort 200" (nfIO $ historySort e 200)
+                              ]
   where
     createAndPopulate = do
       env <- createTestEnv "history"
-      replicateM_ 1000 $ drinkWater env Default Default
+      replicateM_ 1000 $ generate arbitrary >>= \drinkSize ->
+        drinkWater env (Specific drinkSize) Default
       pure env
 
 nada :: Int -> Int
 nada = id
 
-drinkALot :: Int -> IO ()
+drinkALot :: Int -> IO [Text]
 drinkALot n = withTestEnv "bench" $ \env ->
-  replicateM_ n $ drinkWater env Default Default
+  replicateM n $ drinkWater env Default Default
 
-checkALot :: Int -> IO ()
+checkALot :: Int -> IO [Bool]
 checkALot n = withTestEnv "bench" $ \env ->
-  drinkWater env Default Default >> replicateM_ n (checkDrink env)
+  drinkWater env Default Default >> replicateM n (checkDrink env)
 
-historyALot :: Env -> Int -> IO ()
-historyALot env n = replicateM_ n $ getHistory env Default
+historyALot :: Env -> Int -> IO [Drink]
+historyALot env n = replicateM n $ force =<< getHistory env Default
+
+historySort :: Env -> Int -> IO [Drink]
+historySort env n = replicateM n $ force =<< (sort <$> getHistory env Default)
+
+force :: Foldable t => t Drink -> IO Drink
+force x = now >>= \n -> pure $ foldl' const (Drink Sip n) x

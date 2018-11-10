@@ -93,3 +93,5 @@ benchmarks:
     - criterion
     - directory
     - path
+    - QuickCheck
+    - text
