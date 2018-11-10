@@ -31,8 +31,8 @@ import           Data.Aeson                (FromJSON, ToJSON, Value (..),
                                             toJSON, (.:), (.=))
 import           Data.Char                 (toLower)
 import           Data.Maybe                (fromMaybe)
-import           Data.Sequence             (Seq)
-import qualified Data.Sequence             as S (lookup)
+import           Data.Sequence             (Seq, (<|))
+import qualified Data.Sequence             as S (Seq (..), lookup)
 import           Data.String.Conversions   (cs)
 import           Data.Text                 (Text, append)
 import           Data.Time                 (NominalDiffTime, UTCTime,
@@ -147,15 +147,15 @@ readWaterCooler file = unlessEmpty file Nothing $ \contents ->
   either (jbail file) Just (eitherDecode' contents :: Either String WaterCooler)
 
 -- | Read history.
-readHistory :: Path Abs File -> IO [Drink]
-readHistory file = unlessEmpty file [] $ \contents ->
-  either (jbail file) id (eitherDecode' contents :: Either String [Drink])
+readHistory :: Path Abs File -> IO (Seq Drink)
+readHistory file = unlessEmpty file S.Empty $ \contents ->
+  either (jbail file) id (eitherDecode' contents :: Either String (Seq Drink))
 
 -- | Archive the water cooler history.
 archiveHistory :: WaterCooler -> Path Abs File -> IO ()
 archiveHistory (WaterCooler lastDrinky _) histFile = do
   history <- readHistory histFile
-  seq history $ writeJSON histFile $ lastDrinky : history
+  seq history $ writeJSON histFile $ lastDrinky <| history
 
 -- | The time of the next drink.
 nextDrink :: WaterCooler -> UTCTime

@@ -90,6 +90,7 @@ benchmarks:
     - -Wall
     dependencies:
     - water-cooler
+    - containers
     - criterion
     - directory
     - path

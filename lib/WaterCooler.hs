@@ -37,6 +37,8 @@ import           WaterCooler.Util
 import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
+import           Data.Sequence          (Seq)
+import           Data.Sequence          as S (filter)
 import           Data.Text              (Text)
 import           Data.Time              (NominalDiffTime, UTCTime, diffUTCTime)
 
@@ -70,11 +72,10 @@ getLastDrink env = lastDrink <$$> getCooler env
 getCooler :: Env -> IO (Maybe WaterCooler)
 getCooler = readWaterCooler . envGetCooler
 
--- | Get history
--- FIXME: Make Seq instead of list?
-getHistory :: Env -> Optional UTCTime -> IO [Drink]
+-- | Get history.
+getHistory :: Env -> Optional UTCTime -> IO (Seq Drink)
 getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
  where
-   filterTime (Specific t) = filter (compDrinkByTime t)
+   filterTime (Specific t) = S.filter (compDrinkByTime t)
    filterTime Default      = id
    compDrinkByTime t a = _when a > t

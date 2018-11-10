@@ -9,7 +9,8 @@ import           WaterCooler.Internal
 import           Control.Monad             (replicateM, replicateM_)
 import           Criterion.Main            (Benchmark, bench, bgroup,
                                             envWithCleanup, nf, nfIO)
-import           Data.List                 (foldl', sort)
+import           Data.List                 (foldl')
+import           Data.Sequence             (sort)
 import           Data.Text                 (Text)
 import           Test.QuickCheck.Arbitrary (arbitrary)
 import           Test.QuickCheck.Gen       (generate)
