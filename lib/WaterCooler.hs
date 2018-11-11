@@ -78,4 +78,4 @@ getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
  where
    filterTime (Specific t) = S.filter (compDrinkByTime t)
    filterTime Default      = id
-   compDrinkByTime t a = _when a > t
+   compDrinkByTime t a = _when a >= t
