@@ -10,7 +10,10 @@ import           WaterCooler.Env
 import           WaterCooler.Internal
 import           WaterCooler.Util
 
+import Data.Maybe (fromJust)
+import           Control.Monad           (replicateM_)
 import           Data.Sequence           (singleton)
+import           Data.Sequence           as S (Seq (..))
 import           Data.Time               (addUTCTime, diffUTCTime)
 import           Path                    (Abs, File, Path, absfile,
                                           parseAbsFile, toFilePath)
@@ -168,7 +171,7 @@ spec = do
       getLastDrink env >>= (`shouldBe` Just d)
 
   describe "readEnvRC and writeEnvRC" $
-    it "work" $ do
+    it "works" $ do
       cooler  <- getTestFileName "testFileCooler"
       history <- getTestFileName "testFileHistory"
       rc      <- getTestFileName "testRC" >>= parseAbsFile
@@ -205,3 +208,21 @@ spec = do
       timeTilNextc `shouldSatisfy` \x -> x >= 1190 && x <= 1210
 
       -- FIXME: Do more testing here
+
+  describe "getHistory" $ do
+    it "returns empty history" $ withTestEnv "test" $ \env ->
+      getHistory env Default >>= (`shouldBe` S.Empty)
+
+    it "returns all history" $ withTestEnv "test" $ \env -> do
+      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      getHistory env Default >>= \l -> (length l `shouldBe` 100)
+
+    it "returns all history" $ withTestEnv "test" $ \env -> do
+      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      getHistory env Default >>= \l -> (length l `shouldBe` 100)
+
+    it "returns history since some time" $ withTestEnv "test" $ \env -> do
+      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      -- fromJust is evil, but ok for the test purpose here.
+      lastd <- fromJust <$> getLastDrink env
+      getHistory env (Specific $ _when lastd) >>= (`shouldBe` (singleton lastd))

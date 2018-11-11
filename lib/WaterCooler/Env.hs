@@ -29,7 +29,7 @@ module WaterCooler.Env
 import           WaterCooler.Util
 
 import           Control.DeepSeq     (NFData, rnf)
-import           Control.Monad       (join, mzero)
+import           Control.Monad       (join, mzero, when)
 import           Control.Monad.Catch (MonadThrow)
 import           Data.Aeson          (FromJSON, ToJSON, Value (..),
                                       eitherDecode, object, parseJSON, toJSON,
@@ -39,7 +39,7 @@ import           Data.Sequence       (Seq, empty, (|>))
 import qualified Data.Sequence       as S (zipWith)
 import           Data.Text           (Text)
 import           Path                (Abs, File, Path, parseAbsFile, toFilePath)
-import           System.Directory    (removeFile)
+import           System.Directory    (doesFileExist, removeFile)
 
 data Env = Env { _cooler      :: Path Abs File
                , _history     :: Path Abs File
@@ -210,8 +210,8 @@ withTestEnv name f = do
 
   result <- f env
 
-  removeFile cooler
-  removeFile history
+  safeRemoveFile cooler
+  safeRemoveFile history
   pure result
 
 -- | Create a testing environment.
@@ -225,5 +225,10 @@ createTestEnv name = do
 -- | Destroy a testing environment.
 destroyTestEnv :: Env -> IO ()
 destroyTestEnv env = do
-  removeFile $ toFilePath $ envGetCooler env
-  removeFile $ toFilePath $ envGetHistory env
+  safeRemoveFile $ toFilePath $ envGetCooler env
+  safeRemoveFile $ toFilePath $ envGetHistory env
+
+-- | Remove a file only if it exists.
+safeRemoveFile :: FilePath -> IO ()
+safeRemoveFile f = doesFileExist f >>= ifSo (removeFile f)
+  where ifSo = flip when
