@@ -215,14 +215,14 @@ spec = do
 
     it "returns all history" $ withTestEnv "test" $ \env -> do
       _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
-      getHistory env Default >>= \l -> (length l `shouldBe` 100)
+      getHistory env Default >>= \l -> length l `shouldBe` 100
 
     it "returns all history" $ withTestEnv "test" $ \env -> do
       _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
-      getHistory env Default >>= \l -> (length l `shouldBe` 100)
+      getHistory env Default >>= \l -> length l `shouldBe` 100
 
     it "returns history since some time" $ withTestEnv "test" $ \env -> do
       _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       -- fromJust is evil, but ok for the test purpose here.
       lastd <- fromJust <$> getLastDrink env
-      getHistory env (Specific $ _when lastd) >>= (`shouldBe` (singleton lastd))
+      getHistory env (Specific $ _when lastd) >>= (`shouldBe` singleton lastd)
