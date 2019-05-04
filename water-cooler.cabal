@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d4bcac9a0650ed58c73c533f2097ae494e3b7394f316e1727ce631c4c86b152
+-- hash: 7ca911d19a76e37be09893da959e2cf94d54aefe248660102bc2c131820e753b
 
 name:           water-cooler
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       WaterCooler.Display
       WaterCooler.Env
       WaterCooler.FromString
+      WaterCooler.FuzzyTime
       WaterCooler.Internal
       WaterCooler.Util
       WaterCooler.Version
@@ -49,6 +50,7 @@ library
     , directory
     , exceptions
     , filepath
+    , git-date
     , gitrev
     , optional-args
     , path

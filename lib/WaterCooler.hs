@@ -11,6 +11,7 @@ module WaterCooler
   -- Re-exports.
 , DrinkSize (..)
 , Drink
+, FuzzyTime     -- From WaterCooler.FuzzyTime
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
 , formatDrink   -- From WaterCooler.Internal
@@ -19,6 +20,7 @@ module WaterCooler
 , mkEnv         -- From WaterCooler.Env
 , mkEnv'        -- From WaterCooler.Env
 , overrideEnv   -- From WaterCooler.Env
+, toUTC         -- From WaterCooler.FuzzyTime
 , putEnvRC      -- From WaterCooler.Env
 , envGetCooler
 , envGetHistory
@@ -32,6 +34,7 @@ module WaterCooler
 
 import           WaterCooler.Env
 import           WaterCooler.FromString
+import           WaterCooler.FuzzyTime
 import           WaterCooler.Internal
 import           WaterCooler.Util
 import           WaterCooler.Version
@@ -40,7 +43,7 @@ import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Sequence          (Seq)
 import           Data.Sequence          as S (filter)
 import           Data.Text              (Text)
-import           Data.Time              (NominalDiffTime, UTCTime, diffUTCTime)
+import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
@@ -73,9 +76,9 @@ getCooler :: Env -> IO (Maybe WaterCooler)
 getCooler = readWaterCooler . envGetCooler
 
 -- | Get history.
-getHistory :: Env -> Optional UTCTime -> IO (Seq Drink)
+getHistory :: Env -> Optional FuzzyTime -> IO (Seq Drink)
 getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
  where
-   filterTime (Specific t) = S.filter (compDrinkByTime t)
+   filterTime (Specific t) = S.filter (compDrinkByTime $ toUTC t)
    filterTime Default      = id
    compDrinkByTime t a = _when a >= t

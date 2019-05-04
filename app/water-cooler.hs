@@ -51,8 +51,8 @@ dispatchCommand env NoWater wait =
 dispatchCommand env Mkrc _ =
   (\f -> putStrLn $ "Wrote " ++ f) =<< putEnvRC env
 
-dispatchCommand env History _ =
-  getHistory env Default >>= mapM_ formatAndPrint
+dispatchCommand env (History since) _ =
+  getHistory env since >>= mapM_ formatAndPrint
   where
     formatAndPrint x = formatDrink env x >>= T.putStrLn
 

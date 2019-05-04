@@ -36,6 +36,7 @@ library:
     - exceptions
     - filepath
     - gitrev
+    - git-date
     - optional-args
     - path
     - QuickCheck

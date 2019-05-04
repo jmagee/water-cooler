@@ -7,6 +7,7 @@ module WaterCoolerSpec ( spec ) where
 
 import           WaterCooler
 import           WaterCooler.Env
+import           WaterCooler.FuzzyTime
 import           WaterCooler.Internal
 import           WaterCooler.Util
 
@@ -209,6 +210,17 @@ spec = do
 
       -- FIXME: Do more testing here
 
+  describe "FuzzyTime" $ do
+    it "knows January 1, 1980" $ 
+      toUTC <$> fromString "January 1, 1980 00:00:00 UTC" `shouldBe`
+        (Just (read "1980-01-01 00:00:00"))
+    it "knows yesterday is before now" $ let
+      yesterday =  fromJust $ fromString "yesterday"
+      today = fromJust $ fromString "now"
+      in toUTC yesterday `shouldSatisfy` (< toUTC today)
+    it "doesn't take no garbage" $
+      toUTC <$> fromString "blah bleep blo" `shouldBe` Nothing
+
   describe "getHistory" $ do
     it "returns empty history" $ withTestEnv "test" $ \env ->
       getHistory env Default >>= (`shouldBe` S.Empty)
@@ -225,4 +237,4 @@ spec = do
       _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       -- fromJust is evil, but ok for the test purpose here.
       lastd <- fromJust <$> getLastDrink env
-      getHistory env (Specific $ _when lastd) >>= (`shouldBe` singleton lastd)
+      getHistory env (Specific $ (FuzzyTime . _when) lastd) >>= (`shouldBe` singleton lastd)

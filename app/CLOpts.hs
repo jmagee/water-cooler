@@ -40,7 +40,7 @@ data Command = DrinkWater (Optional DrinkSize)
              | NotThirsty
              | NoWater
              | Mkrc
-             | History
+             | History (Optional FuzzyTime)
              deriving (Show)
 
 data Options = Options Common Command deriving (Show)
@@ -105,7 +105,7 @@ parseCommand = subparser
   <> command "not-thirsty"  (pure NotThirsty `withInfo`  "Not thirsty")
   <> command "no-water"     (pure NoWater `withInfo` "Out of water")
   <> command "mkrc"         (pure Mkrc `withInfo` "Create RC file")
-  <> command "history"      (pure History `withInfo` "Recall drink history")
+  <> command "history"      (parseHistory `withInfo` "Recall drink history")
 
 parseDrink :: Parser Command
 parseDrink = DrinkWater <$> optional (argument parseDrinkSize $
@@ -113,6 +113,18 @@ parseDrink = DrinkWater <$> optional (argument parseDrinkSize $
 
 parseDrinkSize :: ReadM DrinkSize
 parseDrinkSize = parseCustom "Drink-Size must be 'sip', 'swallow', or 'gulp'."
+
+-- | Helper to parse the history command.
+parseHistory :: Parser Command
+parseHistory = History <$> optional (option parseSince
+                                    $ long "since"
+                                    <> metavar "Fuzzy time"
+                                    <> help "Limit history since fuzzy time")
+
+-- | Parse a string, expected to contain a "fuzzy time" representation, into a
+-- UTCTime.
+parseSince :: ReadM FuzzyTime
+parseSince = parseCustom "Unrecognized fuzzy time"
 
 -- | Helper to parse custom types.
 parseCustom :: FromString s => String -> ReadM s
