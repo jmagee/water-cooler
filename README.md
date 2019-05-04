@@ -83,6 +83,21 @@ refill and the next drink reminder will be issued in 3600 seconds, or 1 hour.
 The optional flag `--wait N` can be used to override the number of seconds
 until the next drink reminder.
 
+Review drinking history
+-----------------------
+`$ water-cooler history [--since "fuzzy time"]`
+
+Recall your drinking history, optionally restricted from a starting time range
+as specified by a "git-style" fuzzy time string.  Examples:
+
+```
+$ water-cooler history --since "yesterday"
+$ water-cooler history --since "2 weeks"
+$ water-cooler history --since "January 1, 1990"
+$ water-cooler history --since "2018-15-15"
+$ water-cooler history --since "10 minutes"
+```
+
 Options
 =======
 
