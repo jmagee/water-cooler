@@ -213,7 +213,7 @@ spec = do
   describe "FuzzyTime" $ do
     it "knows January 1, 1980" $ 
       toUTC <$> fromString "January 1, 1980 00:00:00 UTC" `shouldBe`
-        (Just (read "1980-01-01 00:00:00"))
+        Just (read "1980-01-01 00:00:00")
     it "knows yesterday is before now" $ let
       yesterday =  fromJust $ fromString "yesterday"
       today = fromJust $ fromString "now"
@@ -226,15 +226,15 @@ spec = do
       getHistory env Default >>= (`shouldBe` S.Empty)
 
     it "returns all history" $ withTestEnv "test" $ \env -> do
-      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       getHistory env Default >>= \l -> length l `shouldBe` 100
 
     it "returns all history" $ withTestEnv "test" $ \env -> do
-      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       getHistory env Default >>= \l -> length l `shouldBe` 100
 
     it "returns history since some time" $ withTestEnv "test" $ \env -> do
-      _ <- replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       -- fromJust is evil, but ok for the test purpose here.
       lastd <- fromJust <$> getLastDrink env
       getHistory env (Specific $ (FuzzyTime . _when) lastd) >>= (`shouldBe` singleton lastd)
