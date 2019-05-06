@@ -94,7 +94,7 @@ as specified by a "git-style" fuzzy time string.  Examples:
 $ water-cooler history --since "yesterday"
 $ water-cooler history --since "2 weeks"
 $ water-cooler history --since "January 1, 1990"
-$ water-cooler history --since "2018-15-15"
+$ water-cooler history --since "2018-05-15"
 $ water-cooler history --since "10 minutes"
 ```
 
