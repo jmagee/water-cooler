@@ -9,9 +9,11 @@ module WaterCooler.Internal
 , archiveHistory
 , drink
 , drinkSizeToFlavor
+, drinkWaterInternal
 , formatDrink
+, getAllDays
+, getSomeDrinkCount
 , lastDrink
-, now
 , magicTimeThreshold
 , nextDrink
 , readHistory
@@ -22,6 +24,7 @@ module WaterCooler.Internal
 import           WaterCooler.Display
 import           WaterCooler.Env
 import           WaterCooler.FromString
+import           WaterCooler.FuzzyTime
 import           WaterCooler.Util
 
 import           Control.DeepSeq           (NFData, rnf)
@@ -32,14 +35,13 @@ import           Data.Aeson                (FromJSON, ToJSON, Value (..),
 import           Data.Char                 (toLower)
 import           Data.Maybe                (fromMaybe)
 import           Data.Sequence             (Seq, (<|))
-import qualified Data.Sequence             as S (Seq (..), lookup)
+import qualified Data.Sequence             as S (Seq (..), lookup, filter)
 import           Data.String.Conversions   (cs)
 import           Data.Text                 (Text, append)
-import           Data.Time                 (NominalDiffTime, UTCTime,
+import           Data.Time                 (NominalDiffTime, UTCTime (..),
                                             addUTCTime, diffUTCTime)
-import           Data.Time.Clock           (getCurrentTime)
 import           Data.Time.Format          (defaultTimeLocale, formatTime)
-import           Data.Time.LocalTime       (getCurrentTimeZone, utcToLocalTime)
+import           Data.Time.LocalTime       (getCurrentTimeZone, utcToLocalTime, LocalTime)
 import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
@@ -133,9 +135,14 @@ instance ToJSON WaterCooler where
 drink :: DrinkSize -> IO Drink
 drink size = Drink size <$> now
 
--- | Get the current time.
-now :: IO UTCTime
-now = {-utcToLocalTime <$> getCurrentTimeZone <*> -}getCurrentTime
+-- | Internal helper for drink water.
+drinkWaterInternal :: Env -> DrinkSize -> NominalDiffTime -> UTCTime -> IO Text
+drinkWaterInternal (Env coolerFile historyFile drinkText _ _) size next time = do
+  let beverage = Drink size time
+  let cooler = WaterCooler beverage next
+  writeWaterCooler coolerFile cooler
+  archiveHistory cooler historyFile
+  pure $ drinkSizeToFlavor drinkText size
 
 -- | Write the water cooler file.
 writeWaterCooler :: Path Abs File -> WaterCooler -> IO ()
@@ -175,3 +182,18 @@ formatDrink env (Drink size time) = do
     where
       build :: DrinkSize -> String -> Text
       build a b = display a `append` " at " `append` cs b
+
+-- | Get all unique days from a sequence of Drinks.
+getAllDays :: Seq Drink -> Seq UTCTime
+getAllDays drinks = seqNubBy sameDay $ _when <$> drinks
+  where
+    sameDay :: UTCTime -> UTCTime -> Bool
+    sameDay (UTCTime day1 _) (UTCTime day2 _) = day1 == day2
+
+-- | Get the count of drinks for some increment, using the provided comparison function.
+getSomeDrinkCount :: Env -> (LocalTime -> Bool) -> IO Int
+getSomeDrinkCount env f = do
+  history <- (readHistory . envGetHistory) env
+  length . S.filter f <$> mapM toLocal history
+    where
+      toLocal (Drink _ t) = getCurrentTimeZone >>= \z -> pure $ utcToLocalTime z t

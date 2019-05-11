@@ -4,6 +4,9 @@
 module WaterCooler
 ( drinkWater
 , checkDrink
+, getDaysDrinkCount
+, getMonthDrinkCount
+, getYearDrinkCount
 , getHistory
 , getLastDrink
 , timeTilNextDrink
@@ -27,6 +30,7 @@ module WaterCooler
 , envGetDrinkText
 , envGetTimeFormat
 , envGetThirstyText
+, todayDate     -- From WaterCooler.FuzzyTime
 , WaterCooler
 , Optional (..) -- From Data.Optional
 , version       -- From WaterCooler.Version
@@ -47,13 +51,8 @@ import           Data.Time              (NominalDiffTime, diffUTCTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
-drinkWater (Env coolerFile historyFile drinkText _ _) size next = do
-  let realSize = defaultTo Swallow size
-  beverage <- drink realSize
-  let cooler = WaterCooler beverage $ defaultTo 1200 next
-  writeWaterCooler coolerFile cooler
-  archiveHistory cooler historyFile
-  pure $ drinkSizeToFlavor drinkText realSize
+drinkWater env size next =
+  drinkWaterInternal env (defaultTo Swallow size) (defaultTo 1200 next) =<< now
 
 -- | Check if it is time for a drink.
 checkDrink :: Env -> IO Bool
@@ -82,3 +81,24 @@ getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
    filterTime (Specific t) = S.filter (compDrinkByTime $ toUTC t)
    filterTime Default      = id
    compDrinkByTime t a = _when a >= t
+
+-- | Get number of drinks in a day
+getDaysDrinkCount :: Env -> BrokenDate -> IO Int
+getDaysDrinkCount env date = getSomeDrinkCount env compDrinkByDay
+  where
+    compDrinkByDay d = case (breakOutDate d, date) of
+      ((y1, m1, d1), (y2, m2, d2)) -> (y1 == y2) && (m1 == m2) && (d1 == d2)
+
+-- | Get number of drinks in the last month
+getMonthDrinkCount :: Env -> BrokenDate -> IO Int
+getMonthDrinkCount env date = getSomeDrinkCount env compDrinkByMonth
+  where
+    compDrinkByMonth d = case (breakOutDate d, date) of
+      ((y1, m1, _), (y2, m2, _)) -> (y1 == y2) && (m1 == m2)
+
+-- | Get number of drinks in the last year
+getYearDrinkCount :: Env -> BrokenDate -> IO Int
+getYearDrinkCount env date = getSomeDrinkCount env compDrinkByYear
+  where
+    compDrinkByYear d = case (breakOutDate d, date) of
+      ((y1, _, _), (y2, _, _)) -> y1 == y2

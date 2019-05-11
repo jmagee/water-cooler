@@ -4,6 +4,7 @@ module WaterCoolerBench (benchmarks, benchmarksHistory) where
 
 import           WaterCooler
 import           WaterCooler.Env
+import           WaterCooler.FuzzyTime
 import           WaterCooler.Internal
 
 import           Control.Monad             (replicateM, replicateM_)

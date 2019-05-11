@@ -11,11 +11,16 @@ import           WaterCooler.FuzzyTime
 import           WaterCooler.Internal
 import           WaterCooler.Util
 
-import Data.Maybe (fromJust)
 import           Control.Monad           (replicateM_)
-import           Data.Sequence           (singleton)
+import           Data.Foldable           (toList)
+import           Data.Functor.Identity   (runIdentity)
+import           Data.List               (nub, nubBy)
+import           Data.Maybe              (fromJust)
+import           Data.Sequence           (fromList, singleton)
 import           Data.Sequence           as S (Seq (..))
-import           Data.Time               (addUTCTime, diffUTCTime)
+import           Data.Time               (UTCTime, addUTCTime,
+                                          defaultTimeLocale, diffUTCTime,
+                                          parseTimeM, LocalTime)
 import           Path                    (Abs, File, Path, absfile,
                                           parseAbsFile, toFilePath)
 import           System.Directory        (removeFile)
@@ -47,6 +52,19 @@ path3S :: FilePath
 path3S = toFilePath path3
 path4S :: FilePath
 path4S = toFilePath path4
+
+-- | Force a UTCTime from a fuzzy string.
+-- For testing convince only, since it is partial.
+forceUTCString :: String -> UTCTime
+forceUTCString = toUTC . fromJust . fromString
+
+-- | Force a UTCTime from a "YYYY-mm-dd" string.
+forceUTCDate:: String -> UTCTime
+forceUTCDate= runIdentity . parseTimeM False defaultTimeLocale "%Y-%m-%d"
+
+-- | Force a Localtime from a "YYYY-mm-dd" string.
+forceLocalDate:: String -> LocalTime
+forceLocalDate= runIdentity . parseTimeM False defaultTimeLocale "%Y-%m-%d"
 
 spec :: Spec
 spec = do
@@ -211,13 +229,13 @@ spec = do
       -- FIXME: Do more testing here
 
   describe "FuzzyTime" $ do
-    it "knows January 1, 1980" $ 
+    it "knows January 1, 1980" $
       toUTC <$> fromString "January 1, 1980 00:00:00 UTC" `shouldBe`
         Just (read "1980-01-01 00:00:00")
     it "knows yesterday is before now" $ let
-      yesterday =  fromJust $ fromString "yesterday"
-      today = fromJust $ fromString "now"
-      in toUTC yesterday `shouldSatisfy` (< toUTC today)
+      yesterday =  forceUTCString "yesterday"
+      today = forceUTCString "now"
+      in yesterday `shouldSatisfy` (< today)
     it "doesn't take no garbage" $
       toUTC <$> fromString "blah bleep blo" `shouldBe` Nothing
 
@@ -238,3 +256,75 @@ spec = do
       -- fromJust is evil, but ok for the test purpose here.
       lastd <- fromJust <$> getLastDrink env
       getHistory env (Specific $ (FuzzyTime . _when) lastd) >>= (`shouldBe` singleton lastd)
+
+  describe "seqNubBy" $ do
+    prop "is equivelant to nub" $ \x ->
+      let s = fromList (x :: [Int])
+      in toList (seqNubBy (==) s) `shouldBe` nub x
+    prop "is equivelant to nubBy" $ \x ->
+      let s = fromList (x :: [String])
+      in toList (seqNubBy (/=) s) `shouldBe` nubBy (/=) x
+    prop "is equivelant to nubBy with drink sizes" $ \x ->
+      let s = fromList (x :: [DrinkSize])
+      in toList (seqNubBy (/=) s) `shouldBe` nubBy (/=) x
+
+  describe "maybeToOptional" $
+    prop "is good" $ \x ->
+      let o = maybeToOptional x
+      in case (o, x) of
+          (Specific a, Just b)  -> a `shouldBe` (b :: Int)
+          (Default,    Nothing) -> True `shouldBe` True
+          (_, _) -> expectationFailure "mismatch between Optional and Maybe"
+
+  describe "getAllDays" $
+    it "seems somewhat reasonable" $ let
+      drinks = fromList [ Drink Sip (forceUTCString "yesterday")
+                        , Drink Sip (forceUTCString "2 days")
+                        , Drink Sip (forceUTCString "2 days")
+                        , Drink Sip (forceUTCString "yesterday")
+                        , Drink Sip (forceUTCString "yesterday")
+                        , Drink Sip (forceUTCString "yesterday")
+                        , Drink Sip (forceUTCString "2 days")
+                        ]
+      days = getAllDays drinks
+      in length days `shouldBe` 2
+
+  describe "breakOutDate" $ do
+    it "2018-01-30" $
+      breakOutDate (forceLocalDate "2018-01-30") `shouldBe` (2018, 1, 30)
+    it "2020-08-11" $
+      breakOutDate (forceLocalDate "2020-08-20") `shouldBe` (2020, 8, 20)
+    it "1970-12-31" $
+      breakOutDate (forceLocalDate "1970-12-31") `shouldBe` (1970, 12, 31)
+    it "1971-01-01" $
+      breakOutDate (forceLocalDate "1971-01-01") `shouldBe` (1971, 01, 01)
+
+  describe "getDayDrinkCount" $ do
+    it "doesn't count old day" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      getDaysDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+    it "seems to add up" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      today <- todayDate
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      getDaysDrinkCount env today >>= (`shouldBe` 100)
+
+  describe "getMonthDrinkCount" $ do
+    it "doesn't count old months" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      getMonthDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+    it "seems to add up" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      today <- todayDate
+      getMonthDrinkCount env today >>= (`shouldBe` 100)
+
+  describe "getYearDrinkCount" $ do
+    it "doesn't count old years" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      getYearDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+    it "seems to add up" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      today <- todayDate
+      getYearDrinkCount env today >>= (`shouldBe` 100)

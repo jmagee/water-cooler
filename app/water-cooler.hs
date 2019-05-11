@@ -56,6 +56,13 @@ dispatchCommand env (History since) _ =
   where
     formatAndPrint x = formatDrink env x >>= T.putStrLn
 
+dispatchCommand env Stats _ = do
+  today <- todayDate
+  (\x -> putStrLn $ "# of all time drinks: " ++ show x) =<< length <$> getHistory env Default
+  (\x -> putStrLn $ "# of drinks this year: " ++ show x) =<< getYearDrinkCount env today
+  (\x -> putStrLn $ "# of drinks this month: " ++ show x) =<< getMonthDrinkCount env today
+  (\x -> putStrLn $ "# of drinks today: " ++ show x) =<< getDaysDrinkCount env today
+
 -- | Select between a default Integer and an optional Integer and wrap the back
 -- up as a Specific NominalDiffTime.
 -- In other words: optionalTime 200 Default -> Specific 200

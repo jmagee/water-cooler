@@ -2,7 +2,9 @@
 module WaterCooler.Util
 ( jbail
 , defaultTo'
+, maybeToOptional
 , mkHomePath
+, seqNubBy
 , unlessEmpty
 , slash
 , writeJSON
@@ -20,6 +22,7 @@ import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString, null, readFile,
                                                  writeFile)
 import           Data.Optional            (Optional (..), defaultTo)
+import           Data.Sequence            as S (Seq (..), filter)
 import           Path                     (Abs, Dir, File, Path, parseAbsDir,
                                            parseRelFile, toFilePath, (</>))
 import           System.Directory         (doesFileExist, getCurrentDirectory,
@@ -56,6 +59,11 @@ writeJSON file thing = BS.writeFile (toFilePath file) $ encodePretty thing
 defaultTo' :: a -> Optional a -> Optional a
 defaultTo' x y = Specific $ defaultTo x y
 
+-- | Convert a Maybe into an Optional
+maybeToOptional :: Maybe a -> Optional a
+maybeToOptional (Just x) = Specific x
+maybeToOptional Nothing  = Default
+
 -- | Nested functor.
 (<$$>) :: Functor f => Functor f' => (a -> b) -> f (f' a) -> f (f' b)
 (<$$>) = fmap . fmap
@@ -75,3 +83,10 @@ getTestFileName s = do
     else pure $ toFilePath f
   where
     getFileName' = liftM2 (</>) getCWD . parseRelFile
+
+-- | nubBy for Sequences.
+seqNubBy :: (a -> a -> Bool) -> S.Seq a -> S.Seq a
+seqNubBy _ S.Empty = S.Empty
+seqNubBy f (x :<| xs) = x :<| seqNubBy f (nubFilter xs)
+  where
+    nubFilter = S.filter $ (not .) (f x)
