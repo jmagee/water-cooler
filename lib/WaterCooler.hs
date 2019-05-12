@@ -5,6 +5,7 @@ module WaterCooler
 ( drinkWater
 , checkDrink
 , getDaysDrinkCount
+, getWeeksDrinkCount
 , getMonthDrinkCount
 , getYearDrinkCount
 , getHistory
@@ -87,18 +88,25 @@ getDaysDrinkCount :: Env -> BrokenDate -> IO Int
 getDaysDrinkCount env date = getSomeDrinkCount env compDrinkByDay
   where
     compDrinkByDay d = case (breakOutDate d, date) of
-      ((y1, m1, d1), (y2, m2, d2)) -> (y1 == y2) && (m1 == m2) && (d1 == d2)
+      ((y1, m1, _, d1), (y2, m2, _, d2)) -> (y1 == y2) && (m1 == m2) && (d1 == d2)
+
+-- | Get number of drinks in a week
+getWeeksDrinkCount :: Env -> BrokenDate -> IO Int
+getWeeksDrinkCount env date = getSomeDrinkCount env compDrinkByDay
+  where
+    compDrinkByDay d = case (breakOutDate d, date) of
+      ((y1, _, w1, _), (y2, _, w2, _)) -> (y1 == y2) && (w1 == w2)
 
 -- | Get number of drinks in the last month
 getMonthDrinkCount :: Env -> BrokenDate -> IO Int
 getMonthDrinkCount env date = getSomeDrinkCount env compDrinkByMonth
   where
     compDrinkByMonth d = case (breakOutDate d, date) of
-      ((y1, m1, _), (y2, m2, _)) -> (y1 == y2) && (m1 == m2)
+      ((y1, m1, _, _), (y2, m2, _, _)) -> (y1 == y2) && (m1 == m2)
 
 -- | Get number of drinks in the last year
 getYearDrinkCount :: Env -> BrokenDate -> IO Int
 getYearDrinkCount env date = getSomeDrinkCount env compDrinkByYear
   where
     compDrinkByYear d = case (breakOutDate d, date) of
-      ((y1, _, _), (y2, _, _)) -> y1 == y2
+      ((y1, _, _, _), (y2, _, _, _)) -> y1 == y2

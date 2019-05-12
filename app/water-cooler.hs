@@ -61,6 +61,7 @@ dispatchCommand env Stats _ = do
   (\x -> putStrLn $ "# of all time drinks: " ++ show x) =<< length <$> getHistory env Default
   (\x -> putStrLn $ "# of drinks this year: " ++ show x) =<< getYearDrinkCount env today
   (\x -> putStrLn $ "# of drinks this month: " ++ show x) =<< getMonthDrinkCount env today
+  (\x -> putStrLn $ "# of drinks this week: " ++ show x) =<< getWeeksDrinkCount env today
   (\x -> putStrLn $ "# of drinks today: " ++ show x) =<< getDaysDrinkCount env today
 
 -- | Select between a default Integer and an optional Integer and wrap the back

@@ -11,11 +11,12 @@ module WaterCooler.FuzzyTime
 
 import           WaterCooler.FromString
 
-import           Data.Time              (LocalTime (..), UTCTime (..),
-                                         getCurrentTimeZone, toGregorian,
-                                         utcToLocalTime)
-import           Data.Time.Clock        (getCurrentTime)
-import           Data.Time.Git          (approxidate)
+import           Data.Time                      (LocalTime (..), UTCTime (..),
+                                                 getCurrentTimeZone,
+                                                 toGregorian, utcToLocalTime)
+import           Data.Time.Calendar.OrdinalDate
+import           Data.Time.Clock                (getCurrentTime)
+import           Data.Time.Git                  (approxidate)
 
 newtype FuzzyTime = FuzzyTime UTCTime
                   deriving (Show)
@@ -28,11 +29,14 @@ toUTC :: FuzzyTime -> UTCTime
 toUTC (FuzzyTime utc) = utc
 
 -- | A date broken down into Year, Month, and Day.
-type BrokenDate = (Integer, Int, Int)
+type BrokenDate = (Integer, Int, Int, Int)
 
--- | Convert a UTCTime into a broken down (year, month, day) tuple.
+-- | Convert a into a broken down (year, month, week, day) tuple.
 breakOutDate :: LocalTime -> BrokenDate
-breakOutDate = toGregorian . localDay 
+breakOutDate local =
+  let (y, m, d) = (toGregorian . localDay) local
+      (w, _)    = (mondayStartWeek . localDay) local
+  in (y, m, w, d)
 
 -- | Get today's date
 todayDate :: IO BrokenDate

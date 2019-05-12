@@ -291,28 +291,38 @@ spec = do
 
   describe "breakOutDate" $ do
     it "2018-01-30" $
-      breakOutDate (forceLocalDate "2018-01-30") `shouldBe` (2018, 1, 30)
+      breakOutDate (forceLocalDate "2018-01-30") `shouldBe` (2018, 1, 5, 30)
     it "2020-08-11" $
-      breakOutDate (forceLocalDate "2020-08-20") `shouldBe` (2020, 8, 20)
+      breakOutDate (forceLocalDate "2020-08-20") `shouldBe` (2020, 8, 33, 20)
     it "1970-12-31" $
-      breakOutDate (forceLocalDate "1970-12-31") `shouldBe` (1970, 12, 31)
+      breakOutDate (forceLocalDate "1970-12-31") `shouldBe` (1970, 12, 52, 31)
     it "1971-01-01" $
-      breakOutDate (forceLocalDate "1971-01-01") `shouldBe` (1971, 01, 01)
+      breakOutDate (forceLocalDate "1971-01-01") `shouldBe` (1971, 01, 0, 01)
 
-  describe "getDayDrinkCount" $ do
+  describe "getDaysDrinkCount" $ do
     it "doesn't count old day" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
-      getDaysDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+      getDaysDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       today <- todayDate
       replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
       getDaysDrinkCount env today >>= (`shouldBe` 100)
 
+  describe "getWeeksDrinkCount" $ do
+    it "doesn't count old day" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      getWeeksDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
+    it "seems to add up" $ withTestEnv "test" $ \env -> do
+      _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
+      today <- todayDate
+      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      getWeeksDrinkCount env today >>= (`shouldBe` 100)
+
   describe "getMonthDrinkCount" $ do
     it "doesn't count old months" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
-      getMonthDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+      getMonthDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
@@ -322,7 +332,7 @@ spec = do
   describe "getYearDrinkCount" $ do
     it "doesn't count old years" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
-      getYearDrinkCount env (2018, 1, 1) >>= (`shouldBe` 0)
+      getYearDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
