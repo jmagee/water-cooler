@@ -98,6 +98,25 @@ $ water-cooler history --since "2018-05-15"
 $ water-cooler history --since "10 minutes"
 ```
 
+Statistics
+----------
+`$ water-cooler stats`
+
+Generate some statistics about your drinking patterns.  Statistics that
+estimate the volume of consumed water can be tuned by providing environment values to
+specify drinks sizes in milliliters.
+
+```
+# of all time drinks: 2194
+# of drinks this year: 912
+# of drinks this month: 157
+# of drinks this week: 37
+# of drinks today: 2
+
+Volume consumed today: 120ml
+Average daily consumption: 597ml
+```
+
 Options
 =======
 
@@ -115,6 +134,11 @@ Options
 |`--env-empty-text` text       | Specify a message to display when out of water. |
 |`--env-thirsty-text` text     | Specify a message to display when thirsty. |
 |`--env-timeformat` format-text| Specify a Unix-style date/time format string. |
+|`--env-sip-volume` ml         | Specify the size of a sip in milliliters. |
+|`--env-swallow-volume` ml     | Specify the size of a swallow in milliliters. |
+|`--env-gulp-volume` ml        | Specify the size of a gulp in milliliters. |
+|`--env-fake-volume` ml        | Specify the size of a fake drink in milliliters. |
+|`--env-empty-volume` ml       | Specify the size of an empty drink in milliliters. |
 
 Shell usage
 ===========
@@ -177,6 +201,13 @@ The RC file is in the following JSON format:
         "This is the gulp text",
         "This is the not thirsty text",
         "This is the out of water text?"
+    ],
+    "drinkVolume": [
+        25,
+        60,
+        125,
+        0,
+        0
     ],
     "history": "This must be an absolute path to the cooler file"
     "cooler": "This must be an absolute path to the history file"
