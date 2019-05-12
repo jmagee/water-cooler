@@ -4,9 +4,11 @@
 module WaterCooler.Env
 ( Env (..)
 , drinkFlavors
+, drinkVolumes
 , envGetCooler
 , envGetHistory
 , envGetDrinkText
+, envGetDrinkVolumes
 , envGetTimeFormat
 , envGetThirstyText
 , getEnvRC
@@ -44,44 +46,49 @@ import           System.Directory    (doesFileExist, removeFile)
 data Env = Env { _cooler      :: Path Abs File
                , _history     :: Path Abs File
                , _drinkText   :: Seq Text
+               , _drinkVolume :: Seq Milliliters
                , _timeFormat  :: Text
                , _thirstyText :: Text
                } deriving (Eq, Show)
 
 instance NFData Env where
-  rnf (Env a b c d e) = a `seq` b `seq` c `seq` d `seq` e `seq` ()
+  rnf (Env a b c d e f) = a `seq` b `seq` c `seq` d `seq` e `seq` f `seq` ()
 
 -- | Create an Env.
 mkEnv :: MonadThrow m
-      => FilePath      -- ^ Cooler file
-      -> FilePath      -- ^ History file
-      -> Seq Text      -- ^ Drink flavor text
-      -> Text          -- ^ Time format string
-      -> Text          -- ^ Thirsty flavor text
+      => FilePath        -- ^ Cooler file
+      -> FilePath        -- ^ History file
+      -> Seq Text        -- ^ Drink flavor text
+      -> Seq Milliliters -- ^ Drink volumes 
+      -> Text            -- ^ Time format string
+      -> Text            -- ^ Thirsty flavor text
       -> m Env
-mkEnv a b c d e = do
+mkEnv a b c d e f = do
   cooler  <- parseAbsFile a
   history <- parseAbsFile b
-  pure $ Env cooler history c d e
+  pure $ Env cooler history c d e f
 
 -- | Create an Env with optionals.
 mkEnv' :: Optional FilePath
        -> Optional FilePath
        -> Optional (Seq Text)
+       -> Optional (Seq Milliliters)
        -> Optional Text
        -> Optional Text
        -> IO Env
-mkEnv' a b c d e = do
+mkEnv' a b c d e f = do
   defCooler  <- mkHomePath ".water-cooler"
   defHistory <- mkHomePath ".water-cooler-history"
   let defDrink = drinkFlavors
+  let defVolume = drinkVolumes
   let defTime = "%F %T"
   let defThirsty = "You're thirsty"
   mkEnv (defaultTo defCooler a)
         (defaultTo defHistory b)
         (defaultTo defDrink c)
-        (defaultTo defTime d)
-        (defaultTo defThirsty e)
+        (defaultTo defVolume d)
+        (defaultTo defTime e)
+        (defaultTo defThirsty f)
 
 -- FIXME: Should this be moved closer to drinkSize?
 -- | Drink flavor texts
@@ -93,8 +100,18 @@ drinkFlavors = empty
              |> "Water is essential"
              |> "Fetch some more water?"
 
+-- | Drink volumes
+drinkVolumes :: Seq Milliliters
+drinkVolumes = empty |> 25 |> 75 |> 150 |> 0 |> 0
+
 mergeDrinkFlavors :: Seq Text -> Seq (Optional Text) -> Seq Text
 mergeDrinkFlavors  = S.zipWith choose
+  where
+    choose x Default      = x
+    choose _ (Specific y) = y
+
+mergeOptionalSeq :: Seq a -> Seq (Optional a) -> Seq a
+mergeOptionalSeq = S.zipWith choose
   where
     choose x Default      = x
     choose _ (Specific y) = y
@@ -103,21 +120,24 @@ mergeDrinkFlavors  = S.zipWith choose
 overrideEnv :: Optional FilePath
             -> Optional FilePath
             -> Seq (Optional Text)
+            -> Seq (Optional Milliliters)
             -> Optional Text
             -> Optional Text
             -> Env
             -> IO Env
-overrideEnv a b c d e env =
+overrideEnv a b c d e f env =
   let cooler    = toFilePath $ _cooler env
       history   = toFilePath $ _history env
       drinkText =  _drinkText env
+      drinkVol  =  _drinkVolume env
       dt        = _timeFormat env
       thirstText= _thirstyText env
   in mkEnv (defaultTo cooler a)
            (defaultTo history b)
-           (mergeDrinkFlavors drinkText c)
-           (defaultTo dt d)
-           (defaultTo thirstText e)
+           (mergeOptionalSeq drinkText c)
+           (mergeOptionalSeq drinkVol d)
+           (defaultTo dt e)
+           (defaultTo thirstText f)
 
 -- | Get Env from RC file
 getEnvRC :: IO Env
@@ -137,6 +157,7 @@ data FakeEnv =
   FakeEnv { _fakeCooler      :: FilePath
           , _fakeHistory     :: FilePath
           , _fakeDrinkText   :: Seq Text
+          , _fakeDrinkVolume :: Seq Milliliters
           , _fakeTimeFormat  :: Text
           , _fakethirstyText :: Text
           } deriving (Show)
@@ -146,31 +167,33 @@ instance FromJSON FakeEnv where
     FakeEnv <$> v .: "cooler"
             <*> v .: "history"
             <*> v .: "drinkText"
+            <*> v .: "drinkVolume"
             <*> v .: "timeFormat"
             <*> v .: "thirstyText"
   parseJSON _ = mzero
 
 instance ToJSON FakeEnv where
-  toJSON (FakeEnv cooler history drinkText timeFormat thirstyText) =
+  toJSON (FakeEnv cooler history drinkText drinkVol timeFormat thirstyText) =
     object [ "cooler"      .= cooler
            , "history"     .= history
            , "drinkText"   .= drinkText
+           , "drinkVolume" .= drinkVol
            , "timeFormat"  .= timeFormat
            , "thirstyText" .= thirstyText
            ]
 
 -- | Create an Env from a FakeEnv
 mkEnvFromFake :: MonadThrow m => FakeEnv -> m Env
-mkEnvFromFake (FakeEnv a b c d e) = mkEnv a b c d e
+mkEnvFromFake (FakeEnv a b c d e f) = mkEnv a b c d e f
 
 -- | Create an Env to a FakeEnv
 toFake :: Env -> FakeEnv
-toFake (Env a b c d e) = FakeEnv (toFilePath a) (toFilePath b) c d e
+toFake (Env a b c d e f) = FakeEnv (toFilePath a) (toFilePath b) c d e f
 
 -- | Read Env rc file
 readEnvRC :: Path Abs File -> IO Env
 readEnvRC file = join $
-  unlessEmpty file (mkEnv' Default Default Default Default Default) $ \contents ->
+  unlessEmpty file (mkEnv' Default Default Default Default Default Default) $ \contents ->
   either (jbail file) mkEnvFromFake (eitherDecode contents)
 
 -- | Write Env rc file.
@@ -191,6 +214,10 @@ envGetHistory = _history
 envGetDrinkText:: Env -> Seq Text
 envGetDrinkText = _drinkText
 
+-- | Get the drink volumesfrom the environment.
+envGetDrinkVolumes :: Env -> Seq Milliliters
+envGetDrinkVolumes = _drinkVolume
+
 -- | Get the time format from the environment.
 envGetTimeFormat :: Env -> Text
 envGetTimeFormat = _timeFormat
@@ -206,7 +233,7 @@ withTestEnv :: String -> (Env -> IO a) -> IO a
 withTestEnv name f = do
   cooler  <- getTestFileName $ name ++ "FileCooler"
   history <- getTestFileName $ name ++ "nameFileHistory"
-  env     <- mkEnv' (Specific cooler) (Specific history) Default Default Default
+  env     <- mkEnv' (Specific cooler) (Specific history) Default Default Default Default
 
   result <- f env
 
@@ -219,7 +246,7 @@ createTestEnv :: String -> IO Env
 createTestEnv name = do
   cooler  <- getTestFileName $ name ++ "FileCooler"
   history <- getTestFileName $ name ++ "nameFileHistory"
-  mkEnv' (Specific cooler) (Specific history) Default Default Default
+  mkEnv' (Specific cooler) (Specific history) Default Default Default Default
 
 
 -- | Destroy a testing environment.

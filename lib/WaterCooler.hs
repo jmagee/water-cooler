@@ -4,7 +4,9 @@
 module WaterCooler
 ( drinkWater
 , checkDrink
+, getAvgVolume
 , getDaysDrinkCount
+, getDaysVolume
 , getWeeksDrinkCount
 , getMonthDrinkCount
 , getYearDrinkCount
@@ -15,6 +17,7 @@ module WaterCooler
   -- Re-exports.
 , DrinkSize (..)
 , Drink
+, Milliliters   -- From WaterCooler.Util
 , FuzzyTime     -- From WaterCooler.FuzzyTime
 , FromString    -- From WaterCooler.FromString
 , fromString    -- From WaterCooler.FromString
@@ -46,9 +49,9 @@ import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Sequence          (Seq)
-import           Data.Sequence          as S (filter)
 import           Data.Text              (Text)
 import           Data.Time              (NominalDiffTime, diffUTCTime)
+import           Data.Time.LocalTime    (getCurrentTimeZone, utcToLocalTime)
 
 -- | Drink water.
 drinkWater :: Env -> Optional DrinkSize -> Optional NominalDiffTime -> IO Text
@@ -77,36 +80,33 @@ getCooler = readWaterCooler . envGetCooler
 
 -- | Get history.
 getHistory :: Env -> Optional FuzzyTime -> IO (Seq Drink)
-getHistory env since = filterTime since <$> (readHistory . envGetHistory) env
- where
-   filterTime (Specific t) = S.filter (compDrinkByTime $ toUTC t)
-   filterTime Default      = id
-   compDrinkByTime t a = _when a >= t
+getHistory env Default = getHistoryFiltered env $ const True
+getHistory env (Specific t) = do
+  local <- getCurrentTimeZone >>= \z -> pure $ utcToLocalTime z (toUTC t)
+  getHistoryFiltered env (>= local)
+
+-- | Get total water drunk on a day.
+getDaysVolume :: Env -> BrokenDate -> IO Milliliters
+getDaysVolume env date = sumDrinks env <$> getDaysDrinks env date
+
+-- | Get the average amount of water drunk per day, based on full history
+getAvgVolume :: Env -> IO Milliliters
+getAvgVolume env = calcAvg <$> getHistory env Default
+  where
+    calcAvg drinks = sumDrinks env drinks `div` length (getAllDays drinks)
 
 -- | Get number of drinks in a day
 getDaysDrinkCount :: Env -> BrokenDate -> IO Int
-getDaysDrinkCount env date = getSomeDrinkCount env compDrinkByDay
-  where
-    compDrinkByDay d = case (breakOutDate d, date) of
-      ((y1, m1, _, d1), (y2, m2, _, d2)) -> (y1 == y2) && (m1 == m2) && (d1 == d2)
+getDaysDrinkCount env date = length <$> getDaysDrinks env date
 
 -- | Get number of drinks in a week
 getWeeksDrinkCount :: Env -> BrokenDate -> IO Int
-getWeeksDrinkCount env date = getSomeDrinkCount env compDrinkByDay
-  where
-    compDrinkByDay d = case (breakOutDate d, date) of
-      ((y1, _, w1, _), (y2, _, w2, _)) -> (y1 == y2) && (w1 == w2)
+getWeeksDrinkCount env date = length <$> getWeeksDrinks env date
 
 -- | Get number of drinks in the last month
 getMonthDrinkCount :: Env -> BrokenDate -> IO Int
-getMonthDrinkCount env date = getSomeDrinkCount env compDrinkByMonth
-  where
-    compDrinkByMonth d = case (breakOutDate d, date) of
-      ((y1, m1, _, _), (y2, m2, _, _)) -> (y1 == y2) && (m1 == m2)
+getMonthDrinkCount env date = length <$> getMonthsDrinks env date
 
 -- | Get number of drinks in the last year
 getYearDrinkCount :: Env -> BrokenDate -> IO Int
-getYearDrinkCount env date = getSomeDrinkCount env compDrinkByYear
-  where
-    compDrinkByYear d = case (breakOutDate d, date) of
-      ((y1, _, _, _), (y2, _, _, _)) -> y1 == y2
+getYearDrinkCount env date = length <$> getYearsDrinks env date

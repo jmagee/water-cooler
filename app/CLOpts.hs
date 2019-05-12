@@ -30,6 +30,11 @@ data Common = Common
             , _emptyText   :: Optional Text     -- Env drink empty text
             , _thirstyText :: Optional Text     -- Env thirsty text
             , _timeFormat  :: Optional Text     -- Env date/time format text
+            , _sipVol      :: Optional Milliliters   -- Env sip volume
+            , _swallowVol  :: Optional Milliliters   -- Env swallow volume
+            , _gulpVol     :: Optional Milliliters   -- Env gulp volume
+            , _fakeVol     :: Optional Milliliters   -- Env fake volume
+            , _emptyVol    :: Optional Milliliters   -- Env empty volume
             } deriving (Show)
 
 -- | Commands.
@@ -96,6 +101,26 @@ parseCommon = Common
                           <> metavar "time format"
                           <> help "Unix-style date/time format string"
                           <> hidden)
+  <*> optional (option auto $ long "env-sip-volume"
+                            <> metavar "ml"
+                            <> help "Volume of a sip"
+                            <> hidden)
+  <*> optional (option auto $ long "env-swallow-volume"
+                            <> metavar "ml"
+                            <> help "Volume of a swallow"
+                            <> hidden)
+  <*> optional (option auto $ long "env-gulp-volume"
+                            <> metavar "ml"
+                            <> help "Volume of a gulp"
+                            <> hidden)
+  <*> optional (option auto $ long "env-fake-volume"
+                            <> metavar "ml"
+                            <> help "Volume of a fake drink"
+                            <> hidden)
+  <*> optional (option auto $ long "env-empty-volume"
+                            <> metavar "ml"
+                            <> help "Volume of an empty drink"
+                            <> hidden)
 
 parseCommand :: Parser Command
 parseCommand = subparser

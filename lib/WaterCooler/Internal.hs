@@ -9,15 +9,21 @@ module WaterCooler.Internal
 , archiveHistory
 , drink
 , drinkSizeToFlavor
+, drinkSizeToMl
 , drinkWaterInternal
 , formatDrink
 , getAllDays
-, getSomeDrinkCount
+, getDaysDrinks
+, getHistoryFiltered
+, getMonthsDrinks
+, getWeeksDrinks
+, getYearsDrinks
 , lastDrink
 , magicTimeThreshold
 , nextDrink
 , readHistory
 , readWaterCooler
+, sumDrinks
 , writeWaterCooler
 ) where
 
@@ -28,20 +34,22 @@ import           WaterCooler.FuzzyTime
 import           WaterCooler.Util
 
 import           Control.DeepSeq           (NFData, rnf)
-import           Control.Monad             (mzero)
+import           Control.Monad             (filterM, mzero)
 import           Data.Aeson                (FromJSON, ToJSON, Value (..),
                                             eitherDecode', object, parseJSON,
                                             toJSON, (.:), (.=))
 import           Data.Char                 (toLower)
+import           Data.Foldable             (toList)
 import           Data.Maybe                (fromMaybe)
-import           Data.Sequence             (Seq, (<|))
-import qualified Data.Sequence             as S (Seq (..), lookup, filter)
+import           Data.Sequence             (Seq, fromList, (<|))
+import qualified Data.Sequence             as S (Seq (..), lookup)
 import           Data.String.Conversions   (cs)
 import           Data.Text                 (Text, append)
 import           Data.Time                 (NominalDiffTime, UTCTime (..),
                                             addUTCTime, diffUTCTime)
 import           Data.Time.Format          (defaultTimeLocale, formatTime)
-import           Data.Time.LocalTime       (getCurrentTimeZone, utcToLocalTime, LocalTime)
+import           Data.Time.LocalTime       (LocalTime, getCurrentTimeZone,
+                                            utcToLocalTime)
 import           Path                      (Abs, File, Path)
 import           Test.QuickCheck           (oneof)
 import           Test.QuickCheck.Arbitrary (Arbitrary, arbitrary, shrink)
@@ -82,11 +90,23 @@ instance Display DrinkSize
 
 -- | Get a flavor text string corrosponding to the drink size.
 drinkSizeToFlavor :: Seq Text -> DrinkSize -> Text
-drinkSizeToFlavor s Sip     = fromMaybe "Undefined" $ S.lookup 0 s
-drinkSizeToFlavor s Swallow = fromMaybe "Undefined" $ S.lookup 1 s
-drinkSizeToFlavor s Gulp    = fromMaybe "Undefined" $ S.lookup 2 s
-drinkSizeToFlavor s Fake    = fromMaybe "Undefined" $ S.lookup 3 s
-drinkSizeToFlavor s Empty   = fromMaybe "Undefined" $ S.lookup 4 s
+drinkSizeToFlavor s = drinkSizeTo s "Undefined"
+
+-- | Get the amount of milliliters for a drink size.
+drinkSizeToMl :: Env -> DrinkSize -> Milliliters
+drinkSizeToMl env = drinkSizeToMl' (envGetDrinkVolumes env)
+
+-- | Helper, to get the amount of milliliters for a drink size.
+drinkSizeToMl' :: Seq Milliliters -> DrinkSize -> Milliliters
+drinkSizeToMl' s = drinkSizeTo s 0
+
+-- | Convert a drink size to something else, using an indexed sequence.
+drinkSizeTo :: Seq a -> a -> DrinkSize -> a
+drinkSizeTo s fallback Sip     = fromMaybe fallback $ S.lookup 0 s
+drinkSizeTo s fallback Swallow = fromMaybe fallback $ S.lookup 1 s
+drinkSizeTo s fallback Gulp    = fromMaybe fallback $ S.lookup 2 s
+drinkSizeTo s fallback Fake    = fromMaybe fallback $ S.lookup 3 s
+drinkSizeTo s fallback Empty   = fromMaybe fallback $ S.lookup 4 s
 
 -- | A drink - when and how much.
 data Drink =
@@ -137,7 +157,7 @@ drink size = Drink size <$> now
 
 -- | Internal helper for drink water.
 drinkWaterInternal :: Env -> DrinkSize -> NominalDiffTime -> UTCTime -> IO Text
-drinkWaterInternal (Env coolerFile historyFile drinkText _ _) size next time = do
+drinkWaterInternal (Env coolerFile historyFile drinkText _ _ _) size next time = do
   let beverage = Drink size time
   let cooler = WaterCooler beverage next
   writeWaterCooler coolerFile cooler
@@ -163,6 +183,15 @@ archiveHistory :: WaterCooler -> Path Abs File -> IO ()
 archiveHistory (WaterCooler lastDrinky _) histFile = do
   history <- readHistory histFile
   seq history $ writeJSON histFile $ lastDrinky <| history
+
+-- | Get history using the provided comparison function for filtering.
+getHistoryFiltered :: Env -> (LocalTime -> Bool) -> IO (Seq Drink)
+getHistoryFiltered env f = do
+  history <- (readHistory . envGetHistory) env
+  fromList <$> filterM f'' (toList history)
+    where
+      f'' x = toLocal x >>= \y -> pure (f y)
+      toLocal (Drink _ t) = getCurrentTimeZone >>= \z -> pure $ utcToLocalTime z t
 
 -- | The time of the next drink.
 nextDrink :: WaterCooler -> UTCTime
@@ -190,10 +219,35 @@ getAllDays drinks = seqNubBy sameDay $ _when <$> drinks
     sameDay :: UTCTime -> UTCTime -> Bool
     sameDay (UTCTime day1 _) (UTCTime day2 _) = day1 == day2
 
--- | Get the count of drinks for some increment, using the provided comparison function.
-getSomeDrinkCount :: Env -> (LocalTime -> Bool) -> IO Int
-getSomeDrinkCount env f = do
-  history <- (readHistory . envGetHistory) env
-  length . S.filter f <$> mapM toLocal history
-    where
-      toLocal (Drink _ t) = getCurrentTimeZone >>= \z -> pure $ utcToLocalTime z t
+-- | Sum the volume of all the drinks.
+sumDrinks :: Env -> Seq Drink -> Milliliters
+sumDrinks env drinks = sum (drinkSizeToMl env . _howMuch <$> drinks)
+
+-- | Get drinks in a Day.
+getDaysDrinks :: Env -> BrokenDate -> IO (Seq Drink)
+getDaysDrinks env date = getHistoryFiltered env compDrinkByDay
+  where
+    compDrinkByDay d = case (breakOutDate d, date) of
+      ((y1, m1, _, d1), (y2, m2, _, d2)) -> (y1 == y2) && (m1 == m2) && (d1 == d2)
+
+-- | Get drinks in a week.
+getWeeksDrinks :: Env -> BrokenDate -> IO (Seq Drink)
+getWeeksDrinks env date = getHistoryFiltered env compDrinkByWeek
+  where
+    compDrinkByWeek d = case (breakOutDate d, date) of
+      ((y1, _, w1, _), (y2, _, w2, _)) -> (y1 == y2) && (w1 == w2)
+
+-- | Get drinks in a month.
+getMonthsDrinks :: Env -> BrokenDate -> IO (Seq Drink)
+getMonthsDrinks env date = getHistoryFiltered env compDrinkByMonth
+  where
+    compDrinkByMonth d = case (breakOutDate d, date) of
+      ((y1, m1, _, _), (y2, m2, _, _)) -> (y1 == y2) && (m1 == m2)
+
+-- | Get drinks in a year.
+getYearsDrinks :: Env -> BrokenDate -> IO (Seq Drink)
+getYearsDrinks env date = getHistoryFiltered env compDrinkByYear
+  where
+    compDrinkByYear d = case (breakOutDate d, date) of
+      ((y1, _, _, _), (y2, _, _, _)) -> y1 == y2
+

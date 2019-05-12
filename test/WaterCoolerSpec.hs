@@ -71,11 +71,12 @@ spec = do
 
   describe "mkEnv" $
     it "creates an environment" $
-      mkEnv path1S path2S (singleton "nice")  "%T" "oh my" >>=
+      mkEnv path1S path2S (singleton "nice") (singleton 7)  "%T" "oh my" >>=
         (`shouldBe`
           Env path1
               path2
               (singleton "nice")
+              (singleton 7)
               "%T"
               "oh my")
 
@@ -84,65 +85,70 @@ spec = do
       mkEnv' (Specific path1S)
              (Specific path2S)
              ((Specific . singleton) "nice")
+             ((Specific . fromList) [0, 1, 2, 3, 4])
              (Specific "%F")
              (Specific "foo") >>=
         (`shouldBe`
           Env path1
               path2
               (singleton "nice")
+              (fromList [0, 1, 2, 3, 4])
               "%F"
               "foo")
 
   describe "mkEnv'" $
     it "create an environment with some defaults " $ do
       pp <- mkHomePath ".water-cooler-history" >>= parseAbsFile
-      mkEnv' (Specific path1S) Default Default Default Default >>=
+      mkEnv' (Specific path1S) Default Default Default Default Default >>=
         (`shouldBe`
-          Env path1 pp drinkFlavors "%F %T" "You're thirsty")
+          Env path1 pp drinkFlavors drinkVolumes "%F %T" "You're thirsty")
 
   describe "mkEnv'" $
     it "create an environment with all defaults " $ do
       pp0 <- mkHomePath ".water-cooler" >>= parseAbsFile
       pp1 <- mkHomePath ".water-cooler-history" >>= parseAbsFile
-      mkEnv' Default Default Default Default Default >>=
-        (`shouldBe` Env pp0 pp1 drinkFlavors "%F %T" "You're thirsty")
+      mkEnv' Default Default Default Default Default Default >>=
+        (`shouldBe` Env pp0 pp1 drinkFlavors drinkVolumes "%F %T" "You're thirsty")
 
   describe "Env and FakeEnv" $
     it "can round trip" $ do
       pp0 <- mkHomePath ".water-cooler"
       pp1 <- mkHomePath ".water-cooler-history"
-      real <- mkEnv pp0 pp1 (singleton "foo") "%F" "foo"
+      real <- mkEnv pp0 pp1 (singleton "foo") (singleton 2) "%F" "foo"
       mkEnvFromFake (toFake real) >>= (`shouldBe` real)
 
   describe "overrideEnv" $
     it "overrides none" $ do
-      startEnv <- mkEnv path1S path2S (singleton "foo") "%F" "bar"
-      overrideEnv Default Default (singleton Default) Default Default startEnv >>=
+      startEnv <- mkEnv path1S path2S (singleton "foo") (singleton 42) "%F" "bar"
+      overrideEnv Default Default (singleton Default) (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env path1
               path2
               (singleton "foo")
+              (singleton 42)
               "%F"
               "bar")
 
   describe "overrideEnv" $
     it "overrides one" $ do
-      startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "bar"
+      startEnv <- mkEnv path1S path2S (singleton "foo") (singleton 42) "%T" "bar"
       overrideEnv (Specific path3S)
-                  Default (singleton Default) Default Default startEnv >>=
+                  Default (singleton Default) (singleton Default) Default Default startEnv >>=
         (`shouldBe`
           Env path3
               path2
               (singleton "foo")
+              (singleton 42)
               "%T"
               "bar")
 
   describe "overrideEnv" $
     it "overrides all" $ do
-      startEnv <- mkEnv path1S path2S (singleton "foo") "%T" "snoo"
+      startEnv <- mkEnv path1S path2S (singleton "foo") (singleton 42) "%T" "snoo"
       overrideEnv (Specific path3S)
                   (Specific path4S)
                   ((singleton . Specific) "bar")
+                  ((singleton . Specific) 69)
                   (Specific "%F")
                   (Specific "boo")
                   startEnv >>=
@@ -150,6 +156,7 @@ spec = do
           Env path3
               path4
               (singleton "bar")
+              (singleton 69)
               "%F"
               "boo")
 
@@ -180,7 +187,7 @@ spec = do
       -- and therefore cannot be removed.
       pp0 <- Specific <$> getTestFileName "testFileCooler"
       pp1 <- Specific <$> getTestFileName "testFileHistory"
-      real <- mkEnv' pp0 pp1 Default Default Default
+      real <- mkEnv' pp0 pp1 Default Default Default Default
       getLastDrink real >>= (`shouldBe` Nothing)
 
   describe "getLastDrink" $
@@ -194,7 +201,7 @@ spec = do
       cooler  <- getTestFileName "testFileCooler"
       history <- getTestFileName "testFileHistory"
       rc      <- getTestFileName "testRC" >>= parseAbsFile
-      env     <- mkEnv cooler history (singleton "flavor text") "%F" "thirsty"
+      env     <- mkEnv cooler history (singleton "flavor text") (singleton 27) "%F" "thirsty"
       writeEnvRC rc env
       readEnvRC rc >>= (`shouldBe` env)
       removeFile (toFilePath rc)
@@ -225,6 +232,16 @@ spec = do
       shouldDrinkc `shouldBe` False
       timeTilNextc <- timeTilNextDrink env
       timeTilNextc `shouldSatisfy` \x -> x >= 1190 && x <= 1210
+
+      -- We drank the expected amount
+      today <- todayDate
+      getDaysVolume env today >>= (`shouldBe` 100)
+      _ <- drinkWater env Default Default
+      _ <- drinkWater env (Specific Gulp) Default
+      _ <- drinkWater env (Specific Gulp) Default
+      _ <- drinkWater env (Specific WaterCooler.Internal.Empty) Default
+      _ <- drinkWater env (Specific Fake) Default
+      getDaysVolume env today >>= (`shouldBe` 475)
 
       -- FIXME: Do more testing here
 
@@ -300,7 +317,7 @@ spec = do
       breakOutDate (forceLocalDate "1971-01-01") `shouldBe` (1971, 01, 0, 01)
 
   describe "getDaysDrinkCount" $ do
-    it "doesn't count old day" $ withTestEnv "test" $ \env -> do
+    it "doesn't count old days" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       getDaysDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
@@ -310,14 +327,14 @@ spec = do
       getDaysDrinkCount env today >>= (`shouldBe` 100)
 
   describe "getWeeksDrinkCount" $ do
-    it "doesn't count old day" $ withTestEnv "test" $ \env -> do
+    it "doesn't count old weeks" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       getWeeksDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
       today <- todayDate
-      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
-      getWeeksDrinkCount env today >>= (`shouldBe` 100)
+      replicateM_ 150 $ drinkWater env (Specific Sip) (Specific 0)
+      getWeeksDrinkCount env today >>= (`shouldBe` 150)
 
   describe "getMonthDrinkCount" $ do
     it "doesn't count old months" $ withTestEnv "test" $ \env -> do
@@ -325,9 +342,9 @@ spec = do
       getMonthDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
-      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      replicateM_ 57 $ drinkWater env (Specific Sip) (Specific 0)
       today <- todayDate
-      getMonthDrinkCount env today >>= (`shouldBe` 100)
+      getMonthDrinkCount env today >>= (`shouldBe` 57)
 
   describe "getYearDrinkCount" $ do
     it "doesn't count old years" $ withTestEnv "test" $ \env -> do
@@ -335,6 +352,12 @@ spec = do
       getYearDrinkCount env (2018, 1, 0, 1) >>= (`shouldBe` 0)
     it "seems to add up" $ withTestEnv "test" $ \env -> do
       _ <- drinkWaterInternal env Swallow 1200 $ forceUTCDate "2000-01-01"
-      replicateM_ 100 $ drinkWater env (Specific Sip) (Specific 0)
+      replicateM_ 29 $ drinkWater env (Specific Sip) (Specific 0)
       today <- todayDate
-      getYearDrinkCount env today >>= (`shouldBe` 100)
+      getYearDrinkCount env today >>= (`shouldBe` 29)
+
+  describe "getAvgVolume" $
+    it "calculates accurate average volume" $ withTestEnv "test" $ \env -> do
+      replicateM_ 4 $ drinkWaterInternal env Sip 1200 $ forceUTCDate "2000-01-01"
+      replicateM_ 4 $ drinkWaterInternal env Gulp 1200 $ forceUTCDate "2000-01-02"
+      getAvgVolume env >>= (`shouldBe` 350)

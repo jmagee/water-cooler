@@ -1,6 +1,7 @@
 -- | Utilities functions.
 module WaterCooler.Util
-( jbail
+( Milliliters
+, jbail
 , defaultTo'
 , maybeToOptional
 , mkHomePath
@@ -28,6 +29,9 @@ import           Path                     (Abs, Dir, File, Path, parseAbsDir,
 import           System.Directory         (doesFileExist, getCurrentDirectory,
                                            getHomeDirectory)
 import           System.FilePath.Posix    (pathSeparator)
+
+-- | Milliliters are measured as an integer value.
+type Milliliters = Int
 
 -- | Read the file, unless it is empty, in which case return a default value
 unlessEmpty :: Path b File -> a -> (BS.ByteString -> a) -> IO a

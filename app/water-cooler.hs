@@ -23,6 +23,7 @@ run (Options com command) =
   getEnvRC >>= overrideEnv (_cooler com)
                            (_history com)
                            (extractFlavors com)
+                           (extractVolumes com)
                            (_timeFormat com)
                            (_thirstyText com)
            >>= \env -> dispatchCommand env command $ _wait com
@@ -63,6 +64,8 @@ dispatchCommand env Stats _ = do
   (\x -> putStrLn $ "# of drinks this month: " ++ show x) =<< getMonthDrinkCount env today
   (\x -> putStrLn $ "# of drinks this week: " ++ show x) =<< getWeeksDrinkCount env today
   (\x -> putStrLn $ "# of drinks today: " ++ show x) =<< getDaysDrinkCount env today
+  (\x -> putStrLn $ "\nVolume consumed today: " ++ show x ++ "ml") =<< getDaysVolume env today
+  (\x -> putStrLn $ "Average daily consumption: " ++ show x ++ "ml") =<< getAvgVolume env
 
 -- | Select between a default Integer and an optional Integer and wrap the back
 -- up as a Specific NominalDiffTime.
@@ -75,3 +78,8 @@ optionalTime a b = fromInteger <$> defaultTo' a b
 extractFlavors :: Common -> Seq (Optional Text)
 extractFlavors com =
   fromList (($ com) <$> [_sipText, _swallowText, _gulpText, _fakeText, _emptyText])
+
+-- | Extract Drink size volumes from Common options.
+extractVolumes :: Common -> Seq (Optional Milliliters)
+extractVolumes com =
+  fromList (($ com) <$> [_sipVol, _swallowVol, _gulpVol, _fakeVol, _emptyVol])
