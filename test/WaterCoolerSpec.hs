@@ -356,8 +356,10 @@ spec = do
       today <- todayDate
       getYearDrinkCount env today >>= (`shouldBe` 29)
 
-  describe "getAvgVolume" $
+  describe "getAvgVolume" $ do
     it "calculates accurate average volume" $ withTestEnv "test" $ \env -> do
       replicateM_ 4 $ drinkWaterInternal env Sip 1200 $ forceUTCDate "2000-01-01"
       replicateM_ 4 $ drinkWaterInternal env Gulp 1200 $ forceUTCDate "2000-01-02"
       getAvgVolume env >>= (`shouldBe` 350)
+    it "handles empty drinking history without destroying the universe" $ withTestEnv "test" $ \env ->
+      getAvgVolume env >>= (`shouldBe` 0)

@@ -49,6 +49,7 @@ import           WaterCooler.Version
 
 import           Data.Optional          (Optional (..), defaultTo)
 import           Data.Sequence          (Seq)
+import qualified Data.Sequence          as S (Seq (Empty))
 import           Data.Text              (Text)
 import           Data.Time              (NominalDiffTime, diffUTCTime)
 import           Data.Time.LocalTime    (getCurrentTimeZone, utcToLocalTime)
@@ -93,7 +94,8 @@ getDaysVolume env date = sumDrinks env <$> getDaysDrinks env date
 getAvgVolume :: Env -> IO Milliliters
 getAvgVolume env = calcAvg <$> getHistory env Default
   where
-    calcAvg drinks = sumDrinks env drinks `div` length (getAllDays drinks)
+    calcAvg S.Empty  = 0
+    calcAvg drinks   = sumDrinks env drinks `div` length (getAllDays drinks)
 
 -- | Get number of drinks in a day
 getDaysDrinkCount :: Env -> BrokenDate -> IO Int
