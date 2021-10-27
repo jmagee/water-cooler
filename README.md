@@ -12,7 +12,7 @@ environment (non-shell environment? _pure blasphemy_!)
 
 Screenshot
 ==========
-Coming soon.
+![WaterCooler Demo](img/water-cooler-demo.gif)
 
 Installation
 ============
