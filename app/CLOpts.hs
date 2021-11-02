@@ -12,8 +12,6 @@ module CLOpts
 
 import           WaterCooler
 
-import           Data.Optional             (Optional (..))
-import           Data.Semigroup            ((<>))
 import           Data.Text                 (Text)
 import           Options.Applicative       hiding (optional)
 import           Options.Applicative.Types (readerAsk)

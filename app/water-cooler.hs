@@ -6,7 +6,6 @@ import           CLOpts
 import           WaterCooler
 import           WaterCooler.Util
 
-import           Control.Monad (mapM_)
 import           Data.Bool     (bool)
 import           Data.Sequence (Seq, fromList)
 import           Data.Text     (Text)

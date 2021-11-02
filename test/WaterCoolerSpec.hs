@@ -13,7 +13,6 @@ import           WaterCooler.Util
 
 import           Control.Monad           (replicateM_)
 import           Data.Foldable           (toList)
-import           Data.Functor.Identity   (runIdentity)
 import           Data.List               (nub, nubBy)
 import           Data.Maybe              (fromJust)
 import           Data.Sequence           (fromList, singleton)
@@ -60,11 +59,11 @@ forceUTCString = toUTC . fromJust . fromString
 
 -- | Force a UTCTime from a "YYYY-mm-dd" string.
 forceUTCDate:: String -> UTCTime
-forceUTCDate= runIdentity . parseTimeM False defaultTimeLocale "%Y-%m-%d"
+forceUTCDate= fromJust . parseTimeM False defaultTimeLocale "%Y-%m-%d"
 
 -- | Force a Localtime from a "YYYY-mm-dd" string.
-forceLocalDate:: String -> LocalTime
-forceLocalDate= runIdentity . parseTimeM False defaultTimeLocale "%Y-%m-%d"
+forceLocalDate:: String -> Maybe LocalTime
+forceLocalDate= parseTimeM False defaultTimeLocale "%Y-%m-%d"
 
 spec :: Spec
 spec = do
@@ -248,7 +247,7 @@ spec = do
   describe "FuzzyTime" $ do
     it "knows January 1, 1980" $
       toUTC <$> fromString "January 1, 1980 00:00:00 UTC" `shouldBe`
-        Just (read "1980-01-01 00:00:00")
+        Just (read "1980-01-01 00:00:00 UTC")
     it "knows yesterday is before now" $ let
       yesterday =  forceUTCString "yesterday"
       today = forceUTCString "now"
@@ -308,13 +307,13 @@ spec = do
 
   describe "breakOutDate" $ do
     it "2018-01-30" $
-      breakOutDate (forceLocalDate "2018-01-30") `shouldBe` (2018, 1, 5, 30)
+      (breakOutDate <$> forceLocalDate "2018-01-30") `shouldBe` Just (2018, 1, 5, 30)
     it "2020-08-11" $
-      breakOutDate (forceLocalDate "2020-08-20") `shouldBe` (2020, 8, 33, 20)
+      (breakOutDate <$> forceLocalDate "2020-08-20") `shouldBe` Just (2020, 8, 33, 20)
     it "1970-12-31" $
-      breakOutDate (forceLocalDate "1970-12-31") `shouldBe` (1970, 12, 52, 31)
+      (breakOutDate <$> forceLocalDate "1970-12-31") `shouldBe` Just (1970, 12, 52, 31)
     it "1971-01-01" $
-      breakOutDate (forceLocalDate "1971-01-01") `shouldBe` (1971, 01, 0, 01)
+      (breakOutDate <$> forceLocalDate "1971-01-01") `shouldBe` Just (1971, 01, 0, 01)
 
   describe "getDaysDrinkCount" $ do
     it "doesn't count old days" $ withTestEnv "test" $ \env -> do
