@@ -12,8 +12,6 @@ module WaterCooler.Util
 , writeJSON
 , (<$$>)
 
-, breakOut
-
 -- Utilities for Testing
 , getCWD
 , getTestFileName
