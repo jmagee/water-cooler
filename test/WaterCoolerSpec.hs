@@ -387,3 +387,5 @@ spec = do
     it "-7199" $ secondsToHumanString (-7199) `shouldBe` "-1h"
     it "-86399" $ secondsToHumanString (-86399) `shouldBe` "-23h"
     it "-86400" $ secondsToHumanString (-86400) `shouldBe` "-1d"
+    it "1.3145" $ secondsToHumanString 1.3145 `shouldBe` "1s"
+    it "-1.3145" $ secondsToHumanString (-1.3145) `shouldBe` "-1s"

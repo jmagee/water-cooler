@@ -98,6 +98,10 @@ seqNubBy f (x :<| xs) = x :<| seqNubBy f (nubFilter xs)
   where
     nubFilter = S.filter $ (not .) (f x)
 
+-- Convert NominalDiffTime into an integer by flooring.
+floorSecs :: NominalDiffTime -> Integer
+floorSecs = floor . nominalDiffTimeToSeconds
+
 -- Create a list of floored interval counts, i.e. given 7200:
 -- [0, 2, 120]
 -- ... indicates the time interval is 0 days; 2 hours; or 120 seconds.
@@ -107,7 +111,6 @@ breakOut s = ($ floorSecs s) <$> [(`div` day), (`div` hour), (`div` minute)]
     minute = 60
     hour = minute * 60
     day = hour * 24
-    floorSecs = floor . nominalDiffTimeToSeconds
 
 -- | Convert NominalDiffTime (as seconds) to a more human readable format.
 -- For example, 260s -> "4m"
@@ -115,7 +118,7 @@ secondsToHumanString :: NominalDiffTime -> String
 secondsToHumanString s | s < 0  = "-" ++ secondsToHumanString (-s)
                        | otherwise =
   case filter notZero (pairings s) of
-     []    -> show s
+     []    -> show (floorSecs s) ++ "s"
      (x:_) -> show (snd x) ++ [fst x]
   where
     notZero x  = snd x /= 0
