@@ -54,7 +54,8 @@ Check time until the next drink
 -------------------------------
 `$ water-cooler next`
 
-The time until the next drink is displayed in seconds.
+The time until the next drink is displayed, rounded down to the nearest time
+unit (seconds, minutes, hours, or days).
 
 Check time since last drink
 ---------------------------

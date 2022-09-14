@@ -35,7 +35,8 @@ dispatchCommand env Status _ =
   checkDrink env >>= bool (pure ()) (T.putStrLn (envGetThirstyText env))
 
 dispatchCommand env NextDrink _ =
-  timeTilNextDrink env >>= \seconds -> putStrLn $ "Next drink in: " ++ show seconds
+  timeTilNextDrink env >>= \seconds -> putStrLn $ "Next drink in: " ++
+                                                  secondsToHumanString seconds
 
 dispatchCommand env LastDrink _ =
   getLastDrink env >>= \case

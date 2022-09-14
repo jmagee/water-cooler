@@ -362,3 +362,28 @@ spec = do
       getAvgVolume env >>= (`shouldBe` 350)
     it "handles empty drinking history without destroying the universe" $ withTestEnv "test" $ \env ->
       getAvgVolume env >>= (`shouldBe` 0)
+
+  describe "secondsToHumanString" $ do
+    it "0" $ secondsToHumanString 0 `shouldBe` "0s"
+    it "1" $ secondsToHumanString 1 `shouldBe` "1s"
+    it "59" $ secondsToHumanString 59 `shouldBe` "59s"
+    it "60" $ secondsToHumanString 60 `shouldBe` "1m"
+    it "61" $ secondsToHumanString 61 `shouldBe` "1m"
+    it "95" $ secondsToHumanString 95 `shouldBe` "1m"
+    it "120" $ secondsToHumanString 120 `shouldBe` "2m"
+    it "3599" $ secondsToHumanString 3599 `shouldBe` "59m"
+    it "3600" $ secondsToHumanString 3600 `shouldBe` "1h"
+    it "7199" $ secondsToHumanString 7199 `shouldBe` "1h"
+    it "86399" $ secondsToHumanString 86399 `shouldBe` "23h"
+    it "86400" $ secondsToHumanString 86400 `shouldBe` "1d"
+    it "-1" $ secondsToHumanString (-1) `shouldBe` "-1s"
+    it "-59" $ secondsToHumanString (-59) `shouldBe` "-59s"
+    it "-60" $ secondsToHumanString (-60) `shouldBe` "-1m"
+    it "-61" $ secondsToHumanString (-61) `shouldBe` "-1m"
+    it "-95" $ secondsToHumanString (-95) `shouldBe` "-1m"
+    it "-120" $ secondsToHumanString (-120) `shouldBe` "-2m"
+    it "-3599" $ secondsToHumanString (-3599) `shouldBe` "-59m"
+    it "-3600" $ secondsToHumanString (-3600) `shouldBe` "-1h"
+    it "-7199" $ secondsToHumanString (-7199) `shouldBe` "-1h"
+    it "-86399" $ secondsToHumanString (-86399) `shouldBe` "-23h"
+    it "-86400" $ secondsToHumanString (-86400) `shouldBe` "-1d"

@@ -5,11 +5,14 @@ module WaterCooler.Util
 , defaultTo'
 , maybeToOptional
 , mkHomePath
+, secondsToHumanString
 , seqNubBy
 , unlessEmpty
 , slash
 , writeJSON
 , (<$$>)
+
+, breakOut
 
 -- Utilities for Testing
 , getCWD
@@ -23,7 +26,9 @@ import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString, null, readFile,
                                                  writeFile)
 import           Data.Optional            (Optional (..), defaultTo)
-import           Data.Sequence            as S (Seq (..), filter)
+import           Data.Sequence            as S (Seq (..))
+import qualified Data.Sequence            as S (filter)
+import           Data.Time                (NominalDiffTime, nominalDiffTimeToSeconds)
 import           Path                     (Abs, Dir, File, Path, parseAbsDir,
                                            parseRelFile, toFilePath, (</>))
 import           System.Directory         (doesFileExist, getCurrentDirectory,
@@ -94,3 +99,27 @@ seqNubBy _ S.Empty = S.Empty
 seqNubBy f (x :<| xs) = x :<| seqNubBy f (nubFilter xs)
   where
     nubFilter = S.filter $ (not .) (f x)
+
+-- Create a list of floored interval counts, i.e. given 7200:
+-- [0, 2, 120]
+-- ... indicates the time interval is 0 days; 2 hours; or 120 seconds.
+breakOut :: NominalDiffTime -> [Integer]
+breakOut s = ($ floorSecs s) <$> [(`div` day), (`div` hour), (`div` minute)]
+  where
+    minute = 60
+    hour = minute * 60
+    day = hour * 24
+    floorSecs = floor . nominalDiffTimeToSeconds
+
+-- | Convert NominalDiffTime (as seconds) to a more human readable format.
+-- For example, 260s -> "4m"
+secondsToHumanString :: NominalDiffTime -> String
+secondsToHumanString s | s < 0  = "-" ++ secondsToHumanString (-s)
+                       | otherwise =
+  case filter notZero (pairings s) of
+     []    -> show s
+     (x:_) -> show (snd x) ++ [fst x]
+  where
+    notZero x  = snd x /= 0
+    pairings = zip suffices . breakOut
+    suffices = "dhm"
