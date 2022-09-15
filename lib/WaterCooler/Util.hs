@@ -23,6 +23,7 @@ import           Data.Aeson.Encode.Pretty (encodePretty)
 import           Data.Bool                (bool)
 import qualified Data.ByteString.Lazy     as BS (ByteString, null, readFile,
                                                  writeFile)
+import           Data.List                (intercalate)
 import           Data.Optional            (Optional (..), defaultTo)
 import           Data.Sequence            as S (Seq (..))
 import qualified Data.Sequence            as S (filter)
@@ -98,6 +99,14 @@ seqNubBy f (x :<| xs) = x :<| seqNubBy f (nubFilter xs)
   where
     nubFilter = S.filter $ (not .) (f x)
 
+-- | Compose and carry.
+-- Compose a list of functions, the return value of each of which is a tuple
+-- where the second element is applied as input to the next function in the
+-- composition pipeline.
+(.^) :: (a, a) -> [a -> (a, a)] -> [(a, a)]
+(.^) (_, a) (f:fs) = let r = f a in r : r .^ fs
+(.^)  _      []    = []
+
 -- Convert NominalDiffTime into an integer by flooring.
 floorSecs :: NominalDiffTime -> Integer
 floorSecs = floor . nominalDiffTimeToSeconds
@@ -105,8 +114,8 @@ floorSecs = floor . nominalDiffTimeToSeconds
 -- Create a list of floored interval counts, i.e. given 7200:
 -- [0, 2, 120]
 -- ... indicates the time interval is 0 days; 2 hours; or 120 seconds.
-breakOut :: NominalDiffTime -> [Integer]
-breakOut s = ($ floorSecs s) <$> [(`div` day), (`div` hour), (`div` minute)]
+breakOut :: NominalDiffTime -> [(Integer, Integer)]
+breakOut s = (undefined, floorSecs s) .^ [(`divMod` day), (`divMod` hour), (`divMod` minute)]
   where
     minute = 60
     hour = minute * 60
@@ -117,10 +126,12 @@ breakOut s = ($ floorSecs s) <$> [(`div` day), (`div` hour), (`div` minute)]
 secondsToHumanString :: NominalDiffTime -> String
 secondsToHumanString s | s < 0  = "-" ++ secondsToHumanString (-s)
                        | otherwise =
-  case filter notZero (pairings s) of
-     []    -> show (floorSecs s) ++ "s"
-     (x:_) -> show (snd x) ++ [fst x]
+  case convert <$> filter notZero (triples s) of
+    []  -> show (floorSecs s) ++ "s"
+    lst -> intercalate ":" lst
   where
-    notZero x  = snd x /= 0
-    pairings = zip suffices . breakOut
+    triple a (b, c) = (a, b, c)
+    notZero (_, b, _)  = b /= 0
+    triples = zipWith triple suffices . breakOut
     suffices = "dhm"
+    convert (u, v, _) = show v ++ [u]
